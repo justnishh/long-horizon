@@ -112,6 +112,9 @@ FOR EACH subtask:
 4. **Update loop-state.json every iteration** — This is your heartbeat.
 5. **Process memory queue every 3 iterations** — Don't let it pile up.
 6. **Max 100 iterations** — Safety valve. Report if hit.
+7. **NEVER overwrite graph-index.json from scratch** — Only READ it, ADD to it, never replace it. If you need to add a node, read the current file first, append your node to the existing nodes object, then write back. NEVER write a fresh/empty index.
+8. **NEVER re-run `lh init`** after it's already been initialized — it will reset the brain.
+9. **Node files are the source of truth** — If graph-index.json seems wrong, the node files in brain/ directories are authoritative. Run `lh repair` to rebuild.
 
 ---
 

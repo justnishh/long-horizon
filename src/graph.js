@@ -175,6 +175,75 @@ function search(cwd, query) {
   return results.sort((a, b) => b.score - a.score);
 }
 
+function repair(cwd) {
+  const lhDir = getLhDir(cwd);
+  const brainDir = path.join(lhDir, 'brain');
+
+  const types = ['decisions', 'lessons', 'patterns', 'tasks', 'milestones', 'context'];
+  const discoveredNodes = {};
+  const discoveredEdges = [];
+  let rootNode = null;
+
+  for (const type of types) {
+    const dir = path.join(brainDir, type);
+    if (!fs.existsSync(dir)) continue;
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.md'));
+
+    for (const file of files) {
+      const content = fs.readFileSync(path.join(dir, file), 'utf8');
+      const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+      if (!fmMatch) continue;
+
+      const fm = fmMatch[1];
+      const id = (fm.match(/id:\s*"([^"]+)"/) || [])[1] || file.replace('.md', '');
+      const nodeType = (fm.match(/type:\s*"([^"]+)"/) || [])[1] || type.slice(0, -1);
+      const title = (fm.match(/title:\s*"([^"]+)"/) || content.match(/^#\s+(.+)/m) || [])[1] || file;
+      const tagsMatch = fm.match(/tags:\s*\[([^\]]*)\]/);
+      const tags = tagsMatch ? tagsMatch[1].replace(/"/g, '').split(',').map(t => t.trim()).filter(Boolean) : [];
+      const weight = parseFloat((fm.match(/weight:\s*([\d.]+)/) || [])[1] || '0.7');
+
+      const edgeMatches = [...fm.matchAll(/target:\s*"([^"]+)"\s*\n\s*relation:\s*"([^"]+)"/g)];
+      const edgesOut = edgeMatches.map(m => m[1]);
+      for (const m of edgeMatches) discoveredEdges.push({ source: id, target: m[1], relation: m[2] });
+
+      discoveredNodes[id] = { type: nodeType, title, file: `brain/${type}/${file}`, edges_out: edgesOut, edges_in: [], tags, weight };
+      if (tags.includes('root')) rootNode = id;
+    }
+  }
+
+  for (const edge of discoveredEdges) {
+    if (discoveredNodes[edge.target] && !discoveredNodes[edge.target].edges_in.includes(edge.source)) {
+      discoveredNodes[edge.target].edges_in.push(edge.source);
+    }
+  }
+
+  if (!rootNode) {
+    const ctx = Object.entries(discoveredNodes).find(([, n]) => n.type === 'context');
+    rootNode = ctx ? ctx[0] : null;
+  }
+
+  const index = {
+    version: '2.0', root_node: rootNode, nodes: discoveredNodes, edges: discoveredEdges,
+    stats: { total_nodes: Object.keys(discoveredNodes).length, total_edges: discoveredEdges.length, last_updated: new Date().toISOString() }
+  };
+
+  writeIndex(index, cwd);
+  return index;
+}
+
+function readIndexSafe(cwd) {
+  const index = readIndex(cwd);
+  const brainDir = path.join(getLhDir(cwd), 'brain');
+  const types = ['decisions', 'lessons', 'patterns', 'tasks', 'milestones', 'context'];
+  let fileCount = 0;
+  for (const type of types) {
+    const dir = path.join(brainDir, type);
+    if (fs.existsSync(dir)) fileCount += fs.readdirSync(dir).filter(f => f.endsWith('.md')).length;
+  }
+  if (fileCount > Object.keys(index.nodes).length + 1) return repair(cwd);
+  return index;
+}
+
 function decay(cwd, { rate = 0.05, minWeight = 0.1 } = {}) {
   const index = readIndex(cwd);
   const now = Date.now();
@@ -255,4 +324,4 @@ function hasContradiction(newText, oldText) {
   return false;
 }
 
-module.exports = { getLhDir, readIndex, writeIndex, generateId, addNode, addEdge, getNode, traverse, query, stats, search, decay, detectConflicts };
+module.exports = { getLhDir, readIndex, readIndexSafe, writeIndex, generateId, addNode, addEdge, getNode, traverse, query, stats, search, decay, detectConflicts, repair };

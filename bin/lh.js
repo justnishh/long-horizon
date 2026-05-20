@@ -51,6 +51,10 @@ const commands = {
     const gs = graph.stats(cwd);
     const ls = loop.status(cwd);
 
+    // Auto-repair if index is stale
+    graph.readIndexSafe(cwd);
+    const gsFixed = graph.stats(cwd);
+
     heading('Loop Status');
     info(`Status: ${ls.status === 'running' ? C.green : ls.status === 'blocked' ? C.red : C.dim}${ls.status}${C.reset}`);
     if (ls.task_description) info(`Task: ${ls.task_description}`);
@@ -64,9 +68,9 @@ const commands = {
     }
 
     heading('Graph Brain');
-    info(`Nodes: ${gs.total_nodes} | Edges: ${gs.total_edges}`);
-    if (gs.types) {
-      Object.entries(gs.types).forEach(([t, c]) => log(`  ${C.dim}${t}: ${c}${C.reset}`));
+    info(`Nodes: ${gsFixed.total_nodes} | Edges: ${gsFixed.total_edges}`);
+    if (gsFixed.types) {
+      Object.entries(gsFixed.types).forEach(([t, c]) => log(`  ${C.dim}${t}: ${c}${C.reset}`));
     }
   },
 
@@ -426,6 +430,8 @@ const commands = {
     try { graph.readIndex(cwd); } catch { errors.push('graph-index.json missing or invalid'); }
     try { loop.status(cwd); } catch { errors.push('loop-state.json missing or invalid'); }
 
+    // Auto-repair
+    const repaired = graph.readIndexSafe(cwd);
     const index = graph.readIndex(cwd);
 
     // Run decay
@@ -446,6 +452,18 @@ const commands = {
       success(`All checks passed (${index.stats.total_nodes} nodes, ${index.stats.total_edges} edges)`);
     } else {
       error(`${errors.length} errors:\n${errors.map(e => `  ! ${e}`).join('\n')}`);
+    }
+  },
+
+  repair() {
+    const graph = require('../src/graph');
+    const index = graph.repair(cwd);
+    success(`Graph rebuilt from node files`);
+    info(`Found: ${index.stats.total_nodes} nodes, ${index.stats.total_edges} edges`);
+    if (index.stats.total_nodes > 0) {
+      const types = {};
+      Object.values(index.nodes).forEach(n => { types[n.type] = (types[n.type] || 0) + 1; });
+      Object.entries(types).forEach(([t, c]) => log(`  ${C.dim}${t}: ${c}${C.reset}`));
     }
   },
 
