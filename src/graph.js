@@ -27,6 +27,9 @@ function generateId(type) {
 }
 
 function addNode(cwd, { type, title, content, tags = [], connectTo, relation, weight = 0.7 }) {
+  const VALID_TYPES = ['decision', 'lesson', 'pattern', 'task', 'milestone', 'context'];
+  if (!VALID_TYPES.includes(type)) throw new Error(`Invalid node type: ${type}. Must be one of: ${VALID_TYPES.join(', ')}`);
+
   const index = readIndex(cwd);
   const id = generateId(type);
   const now = new Date().toISOString();

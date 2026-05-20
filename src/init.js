@@ -6,6 +6,12 @@ function init(cwd = process.cwd()) {
   const lhDir = getLhDir(cwd);
   const brainDir = path.join(lhDir, 'brain');
 
+  // Idempotency: don't overwrite existing brain
+  if (fs.existsSync(path.join(brainDir, 'graph-index.json'))) {
+    const index = JSON.parse(fs.readFileSync(path.join(brainDir, 'graph-index.json'), 'utf8'));
+    return { rootId: index.root_node, lhDir, projectName: path.basename(cwd) };
+  }
+
   const dirs = [
     path.join(brainDir, 'decisions'),
     path.join(brainDir, 'lessons'),

@@ -50,6 +50,12 @@ function iterate(cwd, lastAction) {
   state.loop.last_action = lastAction || null;
   state.loop.last_action_at = new Date().toISOString();
 
+  // Enforce max iterations
+  if (state.loop.iteration >= state.loop.max_iterations) {
+    state.loop.status = 'complete';
+    state.loop.should_continue = false;
+  }
+
   const total = state.loop.subtasks.length;
   const done = state.loop.completed_subtasks.length;
   state.loop.completion_pct = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -60,7 +66,8 @@ function iterate(cwd, lastAction) {
 
 function completeSubtask(cwd, subtaskId) {
   const state = readLoop(cwd);
-  const st = state.loop.subtasks.find(s => s.id === subtaskId);
+  subtaskId = Number(subtaskId);
+  const st = state.loop.subtasks.find(s => Number(s.id) === subtaskId);
   if (st) st.status = 'done';
   if (!state.loop.completed_subtasks.includes(subtaskId)) {
     state.loop.completed_subtasks.push(subtaskId);

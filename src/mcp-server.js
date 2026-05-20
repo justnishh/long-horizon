@@ -3,9 +3,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const readline = require('readline');
 
-const cwd = process.argv[2] || process.cwd();
+const cwd = process.cwd();
 
 // Lazy-load to avoid errors if .long-horizon doesn't exist yet
 function getGraph() { return require('./graph'); }
@@ -225,7 +224,6 @@ function handleToolCall(params) {
 }
 
 // JSON-RPC over stdio
-const rl = readline.createInterface({ input: process.stdin });
 let buffer = '';
 
 process.stdin.on('data', (chunk) => {

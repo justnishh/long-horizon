@@ -352,6 +352,8 @@ const COLORS = {
   milestone: '#ffe600'
 };
 
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let W, H, nodes = [], edges = [], dragging = null, hovered = null, lastJson = '', particles = [];
@@ -465,10 +467,10 @@ function loadGraph(data) {
 
   // Update node list
   document.getElementById('nodeList').innerHTML = nodes.map(n =>
-    '<li class="node-item" data-id="' + n.id + '">' +
+    '<li class="node-item">' +
     '<span class="node-dot" style="background:' + (COLORS[n.type]||'#888') + ';box-shadow:0 0 6px ' + (COLORS[n.type]||'#888') + '"></span>' +
-    '<span class="node-label">' + n.title + '</span>' +
-    '<span class="node-type">' + n.type.slice(0,3) + '</span>' +
+    '<span class="node-label">' + esc(n.title) + '</span>' +
+    '<span class="node-type">' + esc(n.type.slice(0,3)) + '</span>' +
     '</li>'
   ).join('');
 }
@@ -604,9 +606,9 @@ canvas.addEventListener('mousemove', e => {
   const tt = document.getElementById('tooltip');
   if (hovered) {
     tt.innerHTML =
-      '<div class="tt-type">' + hovered.type.toUpperCase() + '</div>' +
-      '<div class="tt-title">' + hovered.title + '</div>' +
-      '<div class="tt-meta">↗ ' + (hovered.edges_out || []).length + ' out &nbsp;·&nbsp; ↙ ' + (hovered.edges_in || []).length + ' in</div>';
+      '<div class="tt-type">' + esc(hovered.type.toUpperCase()) + '</div>' +
+      '<div class="tt-title">' + esc(hovered.title) + '</div>' +
+      '<div class="tt-meta">' + (hovered.edges_out || []).length + ' out · ' + (hovered.edges_in || []).length + ' in</div>';
     tt.style.opacity = 1;
     tt.style.left = (e.clientX + 20) + 'px';
     tt.style.top = (e.clientY + 20) + 'px';
@@ -645,17 +647,17 @@ const server = http.createServer((req, res) => {
   }
 });
 
-server.listen(port, () => {
-  console.log('\x1b[35m\x1b[1m\u27E1 LONG-HORIZON NEURAL INTERFACE\x1b[0m');
-  console.log('\x1b[36m\u203A\x1b[0m Live at: \x1b[4mhttp://localhost:' + port + '\x1b[0m');
-  console.log('\x1b[36m\u203A\x1b[0m Watching: ' + indexPath);
-  console.log('\x1b[36m\u203A\x1b[0m Auto-refresh: 2s | Ctrl+C to stop');
-});
-
 server.on('error', (e) => {
   if (e.code === 'EADDRINUSE') {
     console.log('\x1b[33m!\x1b[0m Port ' + port + ' in use. Viewer already running at http://localhost:' + port);
     process.exit(0);
   }
   throw e;
+});
+
+server.listen(port, () => {
+  console.log('\x1b[35m\x1b[1m\u27E1 LONG-HORIZON NEURAL INTERFACE\x1b[0m');
+  console.log('\x1b[36m\u203A\x1b[0m Live at: \x1b[4mhttp://localhost:' + port + '\x1b[0m');
+  console.log('\x1b[36m\u203A\x1b[0m Watching: ' + indexPath);
+  console.log('\x1b[36m\u203A\x1b[0m Auto-refresh: 2s | Ctrl+C to stop');
 });
