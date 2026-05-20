@@ -186,6 +186,11 @@ const commands = {
     }, 500);
   },
 
+  mcp() {
+    // Start MCP server (stdio mode) - this blocks and communicates via stdin/stdout
+    require(path.join(__dirname, '..', 'src', 'mcp-server.js'));
+  },
+
   compact() {
     const graph = require('../src/graph');
     const loop = require('../src/loop');
@@ -198,6 +203,47 @@ const commands = {
     const file = path.join(sessDir, `compact-${Date.now()}.md`);
     fs.writeFileSync(file, content, 'utf8');
     success(`Compacted. Graph preserved (${gs.total_nodes} nodes, ${gs.total_edges} edges)`);
+  },
+
+  sync() {
+    const { execSync } = require('child_process');
+    const lhDir = path.join(cwd, '.long-horizon');
+
+    if (!fs.existsSync(lhDir)) error('No .long-horizon directory. Run `lh init` first.');
+
+    // Check if git repo exists
+    try {
+      execSync('git rev-parse --git-dir', { cwd, stdio: 'pipe' });
+    } catch {
+      error('Not a git repository. Run `git init` first.');
+    }
+
+    // Stage brain files
+    try {
+      execSync('git add .long-horizon/', { cwd, stdio: 'pipe' });
+      const status = execSync('git status --porcelain .long-horizon/', { cwd, encoding: 'utf8' }).trim();
+
+      if (!status) {
+        info('Brain already synced. No changes.');
+        return;
+      }
+
+      const graph = require('../src/graph');
+      const gs = graph.stats(cwd);
+      const msg = `lh/sync: ${gs.total_nodes} nodes, ${gs.total_edges} edges [${new Date().toISOString().slice(0, 16)}]`;
+      execSync(`git commit -m "${msg}"`, { cwd, stdio: 'pipe' });
+      success(`Synced: ${msg}`);
+
+      // Try to push if remote exists
+      try {
+        execSync('git push', { cwd, stdio: 'pipe' });
+        success('Pushed to remote.');
+      } catch {
+        info('Committed locally. Push manually when ready.');
+      }
+    } catch (e) {
+      error(`Sync failed: ${e.message}`);
+    }
   },
 
   reflect() {
@@ -230,6 +276,12 @@ const commands = {
     try { loop.status(cwd); } catch { errors.push('loop-state.json missing or invalid'); }
 
     const index = graph.readIndex(cwd);
+
+    // Run decay
+    const decayed = graph.decay(cwd);
+    if (decayed > 0) info(`Decayed ${decayed} stale nodes`);
+
+    // Run conflict check on recent nodes
     for (const edge of (index.edges || [])) {
       if (!index.nodes[edge.source]) errors.push(`Broken edge: source ${edge.source} not found`);
       if (!index.nodes[edge.target]) errors.push(`Broken edge: target ${edge.target} not found`);

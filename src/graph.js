@@ -175,4 +175,84 @@ function search(cwd, query) {
   return results.sort((a, b) => b.score - a.score);
 }
 
-module.exports = { getLhDir, readIndex, writeIndex, generateId, addNode, addEdge, getNode, traverse, query, stats, search };
+function decay(cwd, { rate = 0.05, minWeight = 0.1 } = {}) {
+  const index = readIndex(cwd);
+  const now = Date.now();
+  let decayed = 0;
+
+  for (const [id, node] of Object.entries(index.nodes)) {
+    if (node.weight <= minWeight) continue;
+    // Find node file's last modified time
+    const filePath = path.join(getLhDir(cwd), node.file);
+    if (!fs.existsSync(filePath)) continue;
+    const mtime = fs.statSync(filePath).mtimeMs;
+    const daysSince = (now - mtime) / (1000 * 60 * 60 * 24);
+
+    if (daysSince > 7) {
+      const newWeight = Math.max(minWeight, node.weight - (rate * Math.floor(daysSince / 7)));
+      if (newWeight < node.weight) {
+        index.nodes[id].weight = Math.round(newWeight * 100) / 100;
+        decayed++;
+      }
+    }
+  }
+
+  if (decayed > 0) {
+    index.stats.last_updated = new Date().toISOString();
+    writeIndex(index, cwd);
+  }
+
+  return decayed;
+}
+
+function detectConflicts(cwd, { type, title, content }) {
+  const index = readIndex(cwd);
+  const conflicts = [];
+  const titleWords = title.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+
+  for (const [id, node] of Object.entries(index.nodes)) {
+    if (node.type !== type) continue;
+
+    // Check title similarity
+    const nodeWords = node.title.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    const overlap = titleWords.filter(w => nodeWords.includes(w));
+    const similarity = titleWords.length > 0 ? overlap.length / titleWords.length : 0;
+
+    if (similarity >= 0.5) {
+      // Check for contradiction keywords
+      const contradicts = hasContradiction(title, node.title);
+      conflicts.push({
+        id,
+        title: node.title,
+        similarity: Math.round(similarity * 100),
+        contradicts
+      });
+    }
+  }
+
+  return conflicts;
+}
+
+function hasContradiction(newText, oldText) {
+  const n = newText.toLowerCase();
+  const o = oldText.toLowerCase();
+  const negations = ['not', 'never', 'avoid', 'don\'t', 'instead', 'replace', 'remove', 'stop', 'no longer'];
+  const opposites = [
+    ['use', 'avoid'], ['add', 'remove'], ['enable', 'disable'],
+    ['always', 'never'], ['keep', 'replace'], ['yes', 'no']
+  ];
+
+  // One has negation, other doesn't
+  const nHasNeg = negations.some(neg => n.includes(neg));
+  const oHasNeg = negations.some(neg => o.includes(neg));
+  if (nHasNeg !== oHasNeg) return true;
+
+  // Opposite words
+  for (const [a, b] of opposites) {
+    if ((n.includes(a) && o.includes(b)) || (n.includes(b) && o.includes(a))) return true;
+  }
+
+  return false;
+}
+
+module.exports = { getLhDir, readIndex, writeIndex, generateId, addNode, addEdge, getNode, traverse, query, stats, search, decay, detectConflicts };

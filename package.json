@@ -1,6 +1,6 @@
 {
   "name": "long-horizon",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Autonomous AI engineering agent with graph-connected memory. Give it a task — it loops until done while building a knowledge brain.",
   "keywords": [
     "ai",
@@ -22,8 +22,8 @@
     "url": "https://github.com/anthropics/long-horizon"
   },
   "bin": {
-    "long-horizon": "./bin/lh.js",
-    "lh": "./bin/lh.js"
+    "long-horizon": "bin/lh.js",
+    "lh": "bin/lh.js"
   },
   "main": "./src/index.js",
   "files": [
