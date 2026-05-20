@@ -97,6 +97,34 @@ Save this prefix somewhere you can paste it before every task. The AI will then:
 3. Write decisions, lessons, and patterns to the brain
 4. Show progress in the live viewer in real-time
 
+### Follow-up messages:
+
+For every message after the first task, just prefix with:
+```
+Follow the Long-Horizon skill. Continue the autonomous loop.
+
+[Your request here]
+```
+
+**Examples:**
+```
+Follow the Long-Horizon skill. Continue the autonomous loop.
+
+Add a dark mode toggle to the app.
+```
+
+```
+Follow the Long-Horizon skill. Continue the autonomous loop.
+
+The login form doesn't validate email. Fix it.
+```
+
+```
+Follow the Long-Horizon skill. Continue the autonomous loop.
+
+Resume where you left off. Check loop-state.json and continue.
+```
+
 ---
 
 ## 🔁 How It Works
