@@ -652,3 +652,11 @@ server.listen(port, () => {
   console.log('\x1b[36m\u203A\x1b[0m Watching: ' + indexPath);
   console.log('\x1b[36m\u203A\x1b[0m Auto-refresh: 2s | Ctrl+C to stop');
 });
+
+server.on('error', (e) => {
+  if (e.code === 'EADDRINUSE') {
+    console.log('\x1b[33m!\x1b[0m Port ' + port + ' in use. Viewer already running at http://localhost:' + port);
+    process.exit(0);
+  }
+  throw e;
+});
