@@ -108,6 +108,24 @@ const commands = {
     success(`Edge: ${source} →[${relation}]→ ${target}`);
   },
 
+  search() {
+    const graph = require('../src/graph');
+    const query = args.slice(1).join(' ');
+    if (!query) error('Usage: lh search <query>');
+    const results = graph.search(cwd, query);
+
+    if (results.length === 0) {
+      warn(`No results for "${query}"`);
+      return;
+    }
+
+    heading(`Search: "${query}" (${results.length} results)`);
+    results.forEach(r => {
+      const color = { context: C.purple, decision: C.cyan, task: C.blue, lesson: C.green, pattern: C.yellow, milestone: C.bold }[r.type] || '';
+      log(`  ${color}● ${r.title}${C.reset} ${C.dim}[${r.type}] ${r.id}${C.reset}`);
+    });
+  },
+
   adapt() {
     const adapters = require('../src/adapters');
     const adapter = args[1] || 'all';
@@ -242,6 +260,7 @@ ${C.bold}COMMANDS${C.reset}
   ${C.cyan}node${C.reset} <id>          Show specific node + connections
   ${C.cyan}add-node${C.reset} <type> <title>  Create a new node
   ${C.cyan}add-edge${C.reset} <src> <rel> <tgt>  Link two nodes
+  ${C.cyan}search${C.reset} <query>       Search nodes by title, tags, or content
   ${C.cyan}adapt${C.reset} [tool|all|list]  Install for AI tool (cursor/windsurf/aider/claude/codex)
   ${C.cyan}viewer${C.reset}            Open interactive graph visualization (snapshot)
   ${C.cyan}live${C.reset}              Live-updating graph viewer (real-time)

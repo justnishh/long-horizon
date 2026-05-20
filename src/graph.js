@@ -149,4 +149,30 @@ function stats(cwd) {
   return { ...index.stats, types, root_node: index.root_node };
 }
 
-module.exports = { getLhDir, readIndex, writeIndex, generateId, addNode, addEdge, getNode, traverse, query, stats };
+function search(cwd, query) {
+  const index = readIndex(cwd);
+  const q = query.toLowerCase();
+  const results = [];
+
+  for (const [id, node] of Object.entries(index.nodes)) {
+    let score = 0;
+    if (node.title && node.title.toLowerCase().includes(q)) score += 10;
+    if ((node.tags || []).some(t => t.toLowerCase().includes(q))) score += 5;
+    if (node.type.toLowerCase().includes(q)) score += 3;
+
+    // Search file content
+    if (score === 0) {
+      const filePath = path.join(getLhDir(cwd), node.file);
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath, 'utf8');
+        if (content.toLowerCase().includes(q)) score += 2;
+      }
+    }
+
+    if (score > 0) results.push({ id, ...node, score });
+  }
+
+  return results.sort((a, b) => b.score - a.score);
+}
+
+module.exports = { getLhDir, readIndex, writeIndex, generateId, addNode, addEdge, getNode, traverse, query, stats, search };
