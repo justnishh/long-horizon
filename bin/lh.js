@@ -29,6 +29,11 @@ const commands = {
     log('');
     info('Give your AI a task — it will self-execute until done.');
     info('Run `lh adapt` to install for your AI tool.');
+
+    // Auto-start live viewer
+    try {
+      require('child_process').execFileSync('node', [path.join(__dirname, '..', 'src', 'auto-viewer.js'), cwd], { stdio: 'inherit' });
+    } catch {}
   },
 
   status() {

@@ -311,7 +311,22 @@ EVERY 3 ITERATIONS (or when queue has 5+ items):
 2. Create root context node (the "main dot" everything connects to)
 3. Initialize graph-index.json with root node
 4. Initialize loop-state.json as idle
+5. Auto-start live graph viewer (if not already running)
 ```
+
+### Auto-Start Live Viewer
+
+On EVERY session start, before beginning work:
+
+```
+1. Check if port 3333 is in use (viewer already running)
+2. If NOT running → start live viewer in background:
+   node <skill-path>/src/live-viewer.js "<project-path>"
+3. If ALREADY running → skip (do nothing)
+4. Open http://localhost:3333 in browser (only on first start)
+```
+
+This ensures the user always sees the brain growing in real-time without manually running anything.
 
 ### The Root Node
 
@@ -347,14 +362,15 @@ Every project has ONE root node — the "main dot" you described. Everything con
 ### Starting a Session
 
 ```
-1. Read loop-state.json
+1. Auto-start live viewer (run auto-viewer.js — skips if already running)
+2. Read loop-state.json
    - If status == "running" → RESUME loop from last iteration
    - If status == "idle" → Wait for task from user
    - If status == "blocked" → Report blockers, ask for guidance
 
-2. Read graph-index.json → load recent nodes for context
-3. Read last 5 nodes by updated timestamp for working memory
-4. You are now ready to receive a task and self-execute
+3. Read graph-index.json → load recent nodes for context
+4. Read last 5 nodes by updated timestamp for working memory
+5. You are now ready to receive a task and self-execute
 ```
 
 ### Resuming After Context Compaction
