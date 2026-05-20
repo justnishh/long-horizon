@@ -418,7 +418,6 @@ function loadGraph(data) {
 
   lastJson = json;
 
-  const entries = Object.entries(data.nodes);
   const oldPositions = {};
   nodes.forEach(n => { oldPositions[n.id] = { x: n.x, y: n.y }; });
 
