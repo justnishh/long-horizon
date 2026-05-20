@@ -380,7 +380,7 @@ class Particle {
     const y = this.edge.source.y + (this.edge.target.y - this.edge.source.y) * this.t;
     ctx.beginPath();
     ctx.arc(x, y, this.size, 0, Math.PI * 2);
-    ctx.fillStyle = \`rgba(0, 240, 255, \${this.alpha})\`;
+    ctx.fillStyle = 'rgba(0, 240, 255, ' + this.alpha + ')';
     ctx.fill();
   }
 }
@@ -424,7 +424,7 @@ function loadGraph(data) {
 
   // Update HUD
   document.getElementById('hudStats').textContent =
-    \`NODES: \${nodes.length} | EDGES: \${edges.length} | TYPES: \${[...new Set(nodes.map(n => n.type))].length}\`;
+    'NODES: ' + nodes.length + ' | EDGES: ' + edges.length + ' | TYPES: ' + [...new Set(nodes.map(n => n.type))].length;
 
   // Update stats panel
   const types = {};
@@ -619,8 +619,8 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, () => {
-  console.log(\`\\x1b[35m\\x1b[1m⟡ LONG-HORIZON NEURAL INTERFACE\\x1b[0m\`);
-  console.log(\`\\x1b[36m›\\x1b[0m Live at: \\x1b[4mhttp://localhost:\${port}\\x1b[0m\`);
-  console.log(\`\\x1b[36m›\\x1b[0m Watching: \${indexPath}\`);
-  console.log(\`\\x1b[36m›\\x1b[0m Auto-refresh: 2s | Ctrl+C to stop\`);
+  console.log('\x1b[35m\x1b[1m\u27E1 LONG-HORIZON NEURAL INTERFACE\x1b[0m');
+  console.log('\x1b[36m\u203A\x1b[0m Live at: \x1b[4mhttp://localhost:' + port + '\x1b[0m');
+  console.log('\x1b[36m\u203A\x1b[0m Watching: ' + indexPath);
+  console.log('\x1b[36m\u203A\x1b[0m Auto-refresh: 2s | Ctrl+C to stop');
 });
