@@ -8,9 +8,15 @@ function init(cwd = process.cwd()) {
 
   // Idempotency: don't overwrite existing brain
   if (fs.existsSync(path.join(brainDir, 'graph-index.json'))) {
-    const index = JSON.parse(fs.readFileSync(path.join(brainDir, 'graph-index.json'), 'utf8'));
-    return { rootId: index.root_node, lhDir, projectName: path.basename(cwd) };
+    try {
+      const index = JSON.parse(fs.readFileSync(path.join(brainDir, 'graph-index.json'), 'utf8'));
+      return { rootId: index.root_node, lhDir, projectName: path.basename(cwd) };
+    } catch {}
   }
+
+  const projectName = path.basename(cwd).replace(/["\\\n\r]/g, '');
+
+  try {
 
   const dirs = [
     path.join(brainDir, 'decisions'),
@@ -26,7 +32,6 @@ function init(cwd = process.cwd()) {
 
   const rootId = generateId('context');
   const now = new Date().toISOString();
-  const projectName = path.basename(cwd);
 
   // Root node file
   const rootNode = `---
@@ -98,6 +103,9 @@ Initialized by Long-Horizon v2.
   fs.writeFileSync(path.join(lhDir, 'config.json'), JSON.stringify(config, null, 2), 'utf8');
 
   return { rootId, lhDir, projectName };
+  } catch (e) {
+    throw new Error(`Failed to initialize Long-Horizon: ${e.message}`);
+  }
 }
 
 module.exports = { init };

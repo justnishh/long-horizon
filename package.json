@@ -1,6 +1,6 @@
 {
   "name": "long-horizon",
-  "version": "2.2.4",
+  "version": "2.3.0",
   "description": "Autonomous AI engineering agent with graph-connected memory. Give it a task — it loops until done while building a knowledge brain.",
   "keywords": [
     "ai",

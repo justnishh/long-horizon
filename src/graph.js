@@ -13,11 +13,18 @@ function getIndexPath(cwd) {
 function readIndex(cwd) {
   const p = getIndexPath(cwd);
   if (!fs.existsSync(p)) throw new Error('No graph-index.json found. Run `lh init` first.');
-  return JSON.parse(fs.readFileSync(p, 'utf8'));
+  try {
+    return JSON.parse(fs.readFileSync(p, 'utf8'));
+  } catch (e) {
+    throw new Error(`graph-index.json is corrupted. Run \`lh repair\` to rebuild. (${e.message})`);
+  }
 }
 
 function writeIndex(index, cwd) {
-  fs.writeFileSync(getIndexPath(cwd), JSON.stringify(index, null, 2), 'utf8');
+  const p = getIndexPath(cwd);
+  const tmp = p + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(index, null, 2), 'utf8');
+  fs.renameSync(tmp, p);
 }
 
 function generateId(type) {
@@ -149,13 +156,18 @@ function stats(cwd) {
   for (const [, node] of Object.entries(index.nodes)) {
     types[node.type] = (types[node.type] || 0) + 1;
   }
-  return { ...index.stats, types, root_node: index.root_node };
+  // Recalculate stats from actual data (don't trust stored counts)
+  const total_nodes = Object.keys(index.nodes).length;
+  const total_edges = (index.edges || []).length;
+  return { total_nodes, total_edges, last_updated: index.stats.last_updated, types, root_node: index.root_node };
 }
 
 function search(cwd, query) {
   const index = readIndex(cwd);
   const q = query.toLowerCase();
   const results = [];
+  const MAX_FILE_READS = 50;
+  let fileReads = 0;
 
   for (const [id, node] of Object.entries(index.nodes)) {
     let score = 0;
@@ -163,12 +175,16 @@ function search(cwd, query) {
     if ((node.tags || []).some(t => t.toLowerCase().includes(q))) score += 5;
     if (node.type.toLowerCase().includes(q)) score += 3;
 
-    // Search file content
-    if (score === 0) {
+    // Only read file content if no match yet and under limit
+    if (score === 0 && fileReads < MAX_FILE_READS) {
       const filePath = path.join(getLhDir(cwd), node.file);
       if (fs.existsSync(filePath)) {
-        const content = fs.readFileSync(filePath, 'utf8');
-        if (content.toLowerCase().includes(q)) score += 2;
+        const stat = fs.statSync(filePath);
+        if (stat.size < 100000) { // Skip files > 100KB
+          const content = fs.readFileSync(filePath, 'utf8');
+          if (content.toLowerCase().includes(q)) score += 2;
+        }
+        fileReads++;
       }
     }
 
@@ -199,7 +215,7 @@ function repair(cwd) {
 
       const fm = fmMatch[1];
       const id = (fm.match(/id:\s*"([^"]+)"/) || [])[1] || file.replace('.md', '');
-      const nodeType = (fm.match(/type:\s*"([^"]+)"/) || [])[1] || type.slice(0, -1);
+      const nodeType = (fm.match(/type:\s*"([^"]+)"/) || [])[1] || type.replace(/s$/, '');
       const title = (fm.match(/title:\s*"([^"]+)"/) || content.match(/^#\s+(.+)/m) || [])[1] || file;
       const tagsMatch = fm.match(/tags:\s*\[([^\]]*)\]/);
       const tags = tagsMatch ? tagsMatch[1].replace(/"/g, '').split(',').map(t => t.trim()).filter(Boolean) : [];

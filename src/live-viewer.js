@@ -358,13 +358,14 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let W, H, nodes = [], edges = [], dragging = null, hovered = null, lastJson = '', particles = [];
 
-// Sound system
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// Sound system - lazy init on first user gesture
+let audioCtx = null;
 let soundEnabled = true;
 const PITCHES = { context: 440, decision: 523, task: 392, lesson: 587, pattern: 659, milestone: 784 };
 
 function playPing(type) {
-  if (!soundEnabled) return;
+  if (!soundEnabled || !audioCtx) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.connect(gain);
@@ -373,9 +374,15 @@ function playPing(type) {
   osc.frequency.value = PITCHES[type] || 440;
   gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+  osc.onended = () => { osc.disconnect(); gain.disconnect(); };
   osc.start();
   osc.stop(audioCtx.currentTime + 0.6);
 }
+
+// Init audio on first click
+document.addEventListener('click', () => {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}, { once: true });
 
 function resize() {
   W = canvas.width = window.innerWidth - 280;
@@ -502,6 +509,9 @@ function simulate() {
     n.vx *= 0.87;
     n.vy *= 0.87;
     if (n !== dragging) { n.x += n.vx; n.y += n.vy; }
+    // Clamp to canvas bounds
+    n.x = Math.max(n.radius, Math.min(W - n.radius, n.x));
+    n.y = Math.max(60 + n.radius, Math.min(H - n.radius, n.y));
     n.pulsePhase += 0.03;
   });
 }
@@ -530,7 +540,7 @@ function draw() {
     ctx.font = '9px "JetBrains Mono", monospace';
     ctx.fillStyle = 'rgba(0,240,255,0.35)';
     ctx.textAlign = 'center';
-    ctx.fillText(e.relation, mx, my - 6);
+    ctx.fillText(e.relation || '', mx, my - 6);
   });
 
   // Draw particles
@@ -581,6 +591,7 @@ function draw() {
 }
 
 function animate() {
+  if (document.hidden) { requestAnimationFrame(animate); return; }
   simulate();
   draw();
   requestAnimationFrame(animate);
@@ -601,8 +612,11 @@ fetch('/graph.json').then(r => r.json()).then(loadGraph);
 
 // Mouse interaction
 canvas.addEventListener('mousemove', e => {
-  if (dragging) { dragging.x = e.clientX; dragging.y = e.clientY; return; }
-  hovered = nodes.find(n => Math.hypot(n.x - e.clientX, n.y - e.clientY) < n.radius + 6) || null;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  if (dragging) { dragging.x = mx; dragging.y = my; return; }
+  hovered = nodes.find(n => Math.hypot(n.x - mx, n.y - my) < n.radius + 6) || null;
   const tt = document.getElementById('tooltip');
   if (hovered) {
     tt.innerHTML =
@@ -619,7 +633,10 @@ canvas.addEventListener('mousemove', e => {
 });
 
 canvas.addEventListener('mousedown', e => {
-  dragging = nodes.find(n => Math.hypot(n.x - e.clientX, n.y - e.clientY) < n.radius + 6) || null;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  dragging = nodes.find(n => Math.hypot(n.x - mx, n.y - my) < n.radius + 6) || null;
   if (dragging) canvas.style.cursor = 'grabbing';
 });
 

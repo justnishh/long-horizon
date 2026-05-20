@@ -237,6 +237,7 @@ process.stdin.on('data', (chunk) => {
     if (!match) { buffer = buffer.slice(headerEnd + 4); continue; }
 
     const len = parseInt(match[1]);
+    if (len > 1048576) { buffer = buffer.slice(headerEnd + 4); continue; } // 1MB limit
     const bodyStart = headerEnd + 4;
     if (buffer.length < bodyStart + len) break;
 
@@ -246,19 +247,24 @@ process.stdin.on('data', (chunk) => {
     try {
       const msg = JSON.parse(body);
       handleMessage(msg);
-    } catch {}
+    } catch (e) {
+      process.stderr.write('MCP parse error: ' + e.message + '\n');
+    }
   }
 });
 
 function handleMessage(msg) {
   let result;
 
+  // Notifications (no id) don't get responses
+  if (msg.id === undefined && msg.method && msg.method.startsWith('notifications/')) return;
+
   switch (msg.method) {
     case 'initialize':
       result = handleInitialize(msg.params);
       break;
     case 'notifications/initialized':
-      return; // no response needed
+      return;
     case 'tools/list':
       result = handleToolsList();
       break;
@@ -266,7 +272,9 @@ function handleMessage(msg) {
       result = handleToolCall(msg.params);
       break;
     default:
-      send({ jsonrpc: '2.0', id: msg.id, error: { code: -32601, message: `Method not found: ${msg.method}` } });
+      if (msg.id !== undefined) {
+        send({ jsonrpc: '2.0', id: msg.id, error: { code: -32601, message: `Method not found: ${msg.method}` } });
+      }
       return;
   }
 

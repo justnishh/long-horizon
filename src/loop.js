@@ -18,6 +18,12 @@ function writeLoop(state, cwd) {
 
 function start(cwd, { description, subtasks = [], criteria = [] }) {
   const state = readLoop(cwd);
+
+  // Prevent overwriting a running loop
+  if (state.loop.status === 'running') {
+    throw new Error('Loop already running. Finalize or wait for completion before starting a new task.');
+  }
+
   const taskId = generateId('task');
   const now = new Date().toISOString();
 

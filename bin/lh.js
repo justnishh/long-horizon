@@ -244,7 +244,8 @@ const commands = {
       const graph = require('../src/graph');
       const gs = graph.stats(cwd);
       const msg = `lh/sync: ${gs.total_nodes} nodes, ${gs.total_edges} edges [${new Date().toISOString().slice(0, 16)}]`;
-      execSync(`git commit -m "${msg}"`, { cwd, stdio: 'pipe' });
+      const { execFileSync } = require('child_process');
+      execFileSync('git', ['commit', '-m', msg], { cwd, stdio: 'pipe' });
       success(`Synced: ${msg}`);
 
       // Try to push if remote exists
@@ -336,8 +337,11 @@ const commands = {
     const graph = require('../src/graph');
     const index = graph.readIndex(cwd);
     const format = args[1] || 'obsidian';
+    const VALID_FORMATS = ['obsidian', 'markdown', 'json'];
+    if (!VALID_FORMATS.includes(format)) error(`Invalid format: ${format}. Use: ${VALID_FORMATS.join(', ')}`);
     const outDir = path.join(cwd, 'brain-export');
     fs.mkdirSync(outDir, { recursive: true });
+    const usedFilenames = new Set();
 
     if (format === 'json') {
       // JSON export — full dump
@@ -368,7 +372,9 @@ const commands = {
 
         if (links.length) content += '\n\n## Connections\n\n' + links.join('\n');
 
-        const filename = sanitizeFilename(node.title) + '.md';
+        let filename = sanitizeFilename(node.title) + '.md';
+        while (usedFilenames.has(filename)) filename = sanitizeFilename(node.title) + '-' + id.slice(-6) + '.md';
+        usedFilenames.add(filename);
         fs.writeFileSync(path.join(outDir, filename), content, 'utf8');
       }
       success(`Exported Obsidian vault: brain-export/ (${Object.keys(index.nodes).length} files)`);
@@ -392,7 +398,9 @@ const commands = {
 
         if (links.length) content += '\n\n## Connections\n\n' + links.join('\n');
 
-        const filename = sanitizeFilename(node.title) + '.md';
+        let filename = sanitizeFilename(node.title) + '.md';
+        while (usedFilenames.has(filename)) filename = sanitizeFilename(node.title) + '-' + id.slice(-6) + '.md';
+        usedFilenames.add(filename);
         fs.writeFileSync(path.join(outDir, filename), content, 'utf8');
       }
       success(`Exported Markdown wiki: brain-export/ (${Object.keys(index.nodes).length} files)`);

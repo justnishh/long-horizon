@@ -1,7 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const SKILL_CONTENT = fs.readFileSync(path.join(__dirname, '..', 'SKILL.md'), 'utf8');
+let _skillContent = null;
+function getSkillContent() {
+  if (!_skillContent) {
+    const p = path.join(__dirname, '..', 'SKILL.md');
+    if (!fs.existsSync(p)) throw new Error('SKILL.md not found. Package may be corrupted.');
+    _skillContent = fs.readFileSync(p, 'utf8');
+  }
+  return _skillContent;
+}
 
 const adapters = {
   claude: {
@@ -10,7 +18,7 @@ const adapters = {
     generate(cwd) {
       const dir = path.join(cwd, '.claude', 'skills', 'long-horizon');
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(path.join(dir, 'SKILL.md'), SKILL_CONTENT, 'utf8');
+      fs.writeFileSync(path.join(dir, 'SKILL.md'), getSkillContent(), 'utf8');
       return dir;
     }
   },
@@ -18,7 +26,7 @@ const adapters = {
     name: 'Cursor',
     files: ['.cursorrules'],
     generate(cwd) {
-      const content = `# Long-Horizon v2 — Autonomous Loop + Graph Brain\n\n${SKILL_CONTENT}`;
+      const content = `# Long-Horizon v2 — Autonomous Loop + Graph Brain\n\n${getSkillContent()}`;
       fs.writeFileSync(path.join(cwd, '.cursorrules'), content, 'utf8');
       return '.cursorrules';
     }
@@ -27,7 +35,7 @@ const adapters = {
     name: 'Windsurf',
     files: ['.windsurfrules'],
     generate(cwd) {
-      fs.writeFileSync(path.join(cwd, '.windsurfrules'), SKILL_CONTENT, 'utf8');
+      fs.writeFileSync(path.join(cwd, '.windsurfrules'), getSkillContent(), 'utf8');
       return '.windsurfrules';
     }
   },
@@ -35,7 +43,7 @@ const adapters = {
     name: 'Aider',
     files: ['.aider.conf.yml', 'CONVENTIONS.md'],
     generate(cwd) {
-      fs.writeFileSync(path.join(cwd, 'CONVENTIONS.md'), SKILL_CONTENT, 'utf8');
+      fs.writeFileSync(path.join(cwd, 'CONVENTIONS.md'), getSkillContent(), 'utf8');
       const conf = `read: CONVENTIONS.md\n`;
       fs.writeFileSync(path.join(cwd, '.aider.conf.yml'), conf, 'utf8');
       return 'CONVENTIONS.md + .aider.conf.yml';
@@ -45,7 +53,7 @@ const adapters = {
     name: 'OpenAI Codex / ChatGPT',
     files: ['AGENTS.md'],
     generate(cwd) {
-      fs.writeFileSync(path.join(cwd, 'AGENTS.md'), SKILL_CONTENT, 'utf8');
+      fs.writeFileSync(path.join(cwd, 'AGENTS.md'), getSkillContent(), 'utf8');
       return 'AGENTS.md';
     }
   },
@@ -53,7 +61,7 @@ const adapters = {
     name: 'Generic (CLAUDE.md)',
     files: ['CLAUDE.md'],
     generate(cwd) {
-      fs.writeFileSync(path.join(cwd, 'CLAUDE.md'), SKILL_CONTENT, 'utf8');
+      fs.writeFileSync(path.join(cwd, 'CLAUDE.md'), getSkillContent(), 'utf8');
       return 'CLAUDE.md';
     }
   }
