@@ -1,0 +1,23 @@
+{
+  "version": "2.0",
+  "loop": {
+    "max_iterations": 100,
+    "memory_flush_interval": 3,
+    "max_retries_per_subtask": 3,
+    "auto_compact_threshold_pct": 80
+  },
+  "graph": {
+    "max_traversal_depth": 3,
+    "context_nodes_limit": 10,
+    "auto_backlink": true
+  },
+  "validation": {
+    "enabled": true,
+    "test_command": "",
+    "lint_command": ""
+  },
+  "git": {
+    "auto_commit": true,
+    "commit_on_milestone": true
+  }
+}

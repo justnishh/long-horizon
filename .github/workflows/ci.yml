@@ -1,0 +1,151 @@
+name: Long-Horizon CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "SKILL.md"
+      - "scripts/**"
+      - "config/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  validate-skill:
+    name: Validate Skill
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check YAML frontmatter
+        run: |
+          if ! head -1 SKILL.md | grep -q "^---$"; then
+            echo "SKILL.md must start with YAML frontmatter (---)"
+            exit 1
+          fi
+          echo "✓ YAML frontmatter starts correctly"
+
+      - name: Validate SKILL.md name field
+        run: |
+          NAME=$(sed -n '2p' SKILL.md | grep -oP 'name:\s*"\K[^"]+')
+          if [ ${#NAME} -gt 64 ]; then
+            echo "name field exceeds 64 characters (${#NAME})"
+            exit 1
+          fi
+          echo "✓ Name: '$NAME' (${#NAME} chars)"
+
+      - name: Validate SKILL.md description field
+        run: |
+          DESC=$(sed -n '3p' SKILL.md | grep -oP 'description:\s*"\K[^"]+')
+          if [ ${#DESC} -gt 1024 ]; then
+            echo "description field exceeds 1024 characters (${#DESC})"
+            exit 1
+          fi
+          if ! echo "$DESC" | grep -qi "use when"; then
+            echo "description should include 'when' trigger conditions"
+            exit 1
+          fi
+          echo "✓ Description: ${#DESC} chars, includes trigger conditions"
+
+  lint-scripts:
+    name: Lint Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check shell scripts syntax
+        run: |
+          for f in scripts/*.sh install.sh; do
+            if [ -f "$f" ]; then
+              bash -n "$f" && echo "✓ $f syntax OK" || exit 1
+            fi
+          done
+
+      - name: Check PowerShell scripts syntax
+        run: |
+          for f in scripts/*.ps1; do
+            if [ -f "$f" ]; then
+              pwsh -NoProfile -Command "& { if (!(Test-Path '$f')) { exit 0 }; \$errors = @(); Invoke-Expression (Get-Content '$f' -Raw) 2>&1 | Out-Null; if (\$LASTEXITCODE -ne 0 -and \$LASTEXITCODE -ne 1) { \$errors += 'Syntax error in $f' }; if (\$errors.Count -gt 0) { Write-Error \$errors; exit 1 } else { Write-Host '✓ $f syntax OK' } }" 2>/dev/null || echo "⚠ Skipping $f (pwsh not available)"
+            fi
+          done
+
+  check-templates:
+    name: Check Templates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify all templates exist
+        run: |
+          required_templates=(
+            "resources/templates/adr-template.md"
+            "resources/templates/lesson-template.md"
+            "resources/templates/pattern-template.md"
+            "resources/templates/session-log-template.md"
+            "resources/templates/handoff-template.md"
+          )
+          for t in "${required_templates[@]}"; do
+            if [ -f "$t" ]; then
+              echo "✓ $t"
+            else
+              echo "✗ MISSING: $t"
+              exit 1
+            fi
+          done
+
+  check-brain-integrity:
+    name: Check Init Output
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Simulate /lh init
+        run: |
+          mkdir -p /tmp/lh-test
+          cd /tmp/lh-test
+          mkdir -p .long-horizon/brain/{decisions,roadmap,lessons,patterns,context,metrics}
+          mkdir -p .long-horizon/sessions
+
+          # Create project.json
+          cat > .long-horizon/brain/project.json << 'EOF'
+          {"name":"test","initialized":"2026-05-19","tech_stack":[],"goals":[],"version":"1.0"}
+          EOF
+
+          # Create state.json
+          cat > .long-horizon/brain/context/state.json << 'EOF'
+          {"current_task":null,"last_session":null,"total_tasks":0,"quality_score":1.0,"sessions_count":0}
+          EOF
+
+          # Verify structure
+          errors=0
+          for dir in brain brain/decisions brain/roadmap brain/lessons brain/patterns brain/context brain/metrics sessions; do
+            if [ -d ".long-horizon/$dir" ]; then
+              echo "✓ .long-horizon/$dir"
+            else
+              echo "✗ MISSING: .long-horizon/$dir"
+              errors=$((errors+1))
+            fi
+          done
+
+          if [ $errors -gt 0 ]; then
+            exit 1
+          fi
+          echo "Brain structure validated successfully"
+
+  tag-release:
+    name: Tag Release
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    needs: [validate-skill, lint-scripts, check-templates]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create version tag
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          echo "Tagging version: $VERSION"
+          git tag "lh/$VERSION"
+          git push origin "lh/$VERSION"

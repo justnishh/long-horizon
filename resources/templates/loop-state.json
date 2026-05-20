@@ -1,0 +1,24 @@
+{
+  "version": "2.0",
+  "loop": {
+    "status": "idle",
+    "task_id": null,
+    "task_description": null,
+    "started_at": null,
+    "iteration": 0,
+    "max_iterations": 100,
+    "subtasks": [],
+    "completed_subtasks": [],
+    "blocked_subtasks": [],
+    "completion_criteria": [],
+    "completion_pct": 0,
+    "last_action": null,
+    "last_action_at": null,
+    "errors": [],
+    "should_continue": true
+  },
+  "memory_queue": {
+    "pending_nodes": [],
+    "pending_edges": []
+  }
+}
