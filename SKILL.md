@@ -14,12 +14,71 @@ You are an autonomous engineering agent. When given a task, you do NOT stop afte
 When you receive a task:
 1. Decompose it into subtasks
 2. Execute subtask 1
-3. Update memory graph
+3. **Write brain nodes to disk** (see MANDATORY MEMORY WRITES below)
 4. Check: is the task 100% complete?
 5. If NO → execute next subtask → go to step 3
 6. If YES → finalize, update graph, report done
 
 **You do not wait for the user between subtasks.** You self-trigger. You are the loop.
+
+---
+
+## MANDATORY MEMORY WRITES
+
+**After every 2-3 subtasks, you MUST create node files on disk.** This is not optional. Do not just "queue" them — physically write the files.
+
+### How to write a node (EXACT steps):
+
+**Step 1:** Create the node file at `.long-horizon/brain/{type}s/{id}.md`:
+
+```markdown
+---
+id: "decision-20240520-abc123"
+type: "decision"
+created: "2024-05-20T10:00:00"
+updated: "2024-05-20T10:00:00"
+status: "active"
+edges:
+  - target: "ROOT_NODE_ID_HERE"
+    relation: "related"
+tags: ["relevant", "tags"]
+weight: 0.8
+---
+
+# Title of the decision
+
+## Content
+
+What was decided and why.
+
+## Context
+
+Why this node exists.
+
+## Backlinks
+
+```
+
+**Step 2:** Update `.long-horizon/brain/graph-index.json` — READ the current file, ADD your node to the `nodes` object, ADD edge to `edges` array, INCREMENT `stats.total_nodes`. **NEVER replace the file — only append to it.**
+
+### What to create nodes for:
+
+| When this happens... | Create this node type |
+|---------------------|----------------------|
+| You choose an approach/tool/pattern | `decision` |
+| You complete a major piece of work | `task` |
+| Something fails and you learn why | `lesson` |
+| You notice a reusable approach | `pattern` |
+| A major goal is achieved | `milestone` |
+
+### MINIMUM requirement per task:
+
+- At least 1 `task` node (what you built)
+- At least 1 `decision` node (key choice you made)
+- At least 1 `milestone` node (when done)
+- `lesson` and `pattern` nodes whenever applicable
+
+**If you finish a task and the brain/ directories have no new .md files, YOU FAILED the skill requirements.**
 
 ---
 
@@ -247,48 +306,32 @@ The central registry of all nodes and edges:
 
 ## PARALLEL MEMORY UPDATES
 
-While executing subtasks, you simultaneously update the brain graph. This happens via the memory queue:
+**DO NOT just queue nodes in memory_queue. WRITE THEM TO DISK.**
 
-### How It Works
+After completing subtasks 2-3, STOP and do this:
+
+1. Create `.md` files in the appropriate `brain/{type}s/` directory
+2. Read `graph-index.json`, add your nodes to it, write it back
+3. Then continue with the next subtask
+
+### Example: After building a login page
 
 ```
-DURING EACH SUBTASK:
-  - Notice something worth remembering? → Queue it
-  - Made a decision? → Queue a decision node
-  - Hit a problem and solved it? → Queue a lesson node
-  - Found a reusable approach? → Queue a pattern node
+# 1. Create decision node file
+Write to: .long-horizon/brain/decisions/decision-20240520-abc123.md
 
-EVERY 3 ITERATIONS (or when queue has 5+ items):
-  - Process pending_nodes: create files, update graph-index
-  - Process pending_edges: link nodes, update backlinks
-  - Clear the queue
+# 2. Create task node file  
+Write to: .long-horizon/brain/tasks/task-20240520-def456.md
+
+# 3. Update graph-index.json (READ → ADD → WRITE BACK)
+Read current graph-index.json
+Add new nodes to "nodes" object
+Add new edges to "edges" array
+Increment stats.total_nodes and stats.total_edges
+Write back to graph-index.json
 ```
 
-### Memory Queue Format
-
-```json
-{
-  "memory_queue": {
-    "pending_nodes": [
-      {
-        "type": "lesson",
-        "title": "Rate limiting needs to be per-user not global",
-        "content": "Global rate limit caused all users to be blocked when one user hit the limit",
-        "tags": ["api", "rate-limiting"],
-        "connect_to": ["task-20240520-d4e5f6"],
-        "relation": "learned_from"
-      }
-    ],
-    "pending_edges": [
-      {
-        "source": "pattern-20240520-x1y2z3",
-        "target": "decision-20240520-a1b2c3",
-        "relation": "implements"
-      }
-    ]
-  }
-}
-```
+**The node files on disk ARE the memory. If they don't exist, the AI has no memory.**
 
 ---
 
