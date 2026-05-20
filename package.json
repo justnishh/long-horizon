@@ -19,7 +19,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthropics/long-horizon"
+    "url": "https://github.com/justnishh/long-horizon"
   },
   "bin": {
     "long-horizon": "bin/lh.js",

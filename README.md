@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/Memory-Graph%20Brain-ff69b4?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Dependencies-Zero-brightgreen?style=for-the-badge" />
   <img src="https://img.shields.io/npm/v/long-horizon?style=for-the-badge&color=orange" />
-  <img src="https://img.shields.io/github/stars/anthropics/long-horizon?style=for-the-badge" />
+  <img src="https://img.shields.io/github/stars/justnishh/long-horizon?style=for-the-badge" />
 </p>
 
 <h1 align="center">🧠 Long-Horizon</h1>
@@ -17,7 +17,8 @@
   <a href="#quick-start">Quick Start</a> •
   <a href="#how-it-works">How It Works</a> •
   <a href="#works-with">Works With</a> •
-  <a href="#graph-viewer">Graph Viewer</a>
+  <a href="#live-brain-viewer">Live Brain Viewer</a> •
+  <a href="#mcp-server">MCP Server</a>
 </p>
 
 ---
@@ -38,21 +39,23 @@ Now your AI:
 1. **Self-loops** — executes subtask after subtask without stopping
 2. **Never forgets** — builds a connected knowledge graph as it works
 3. **Resumes perfectly** — picks up exactly where it left off after any interruption
+4. **Self-heals** — graph index auto-repairs if corrupted
 
 ---
 
 ## Quick Start
 
 ```bash
-# Install (or use npx — zero install needed)
+# Initialize in your project
 npx long-horizon init
 
 # Install for your AI tool
 npx long-horizon adapt cursor    # or: windsurf, aider, claude, codex, all
 
-# That's it. Give your AI a task:
-# "Build a REST API with authentication"
-# It will decompose → execute → loop → done. No hand-holding.
+# Start the live brain viewer
+npx long-horizon live
+
+# Give your AI a task — it loops autonomously until done
 ```
 
 ---
@@ -98,8 +101,6 @@ Every decision, lesson, and pattern becomes a connected node:
     └──────────┘                    └──────────┘
 ```
 
-One root node → everything connects → traverse from any knowledge to related knowledge.
-
 ### 3. Parallel Memory
 
 While the AI works, it simultaneously queues knowledge updates. Every 3 iterations, it flushes — creating nodes, linking edges. **Work and memory happen at the same time.**
@@ -120,33 +121,70 @@ While the AI works, it simultaneously queues knowledge updates. Every 3 iteratio
 
 ---
 
-## Graph Viewer
+## Live Brain Viewer
 
-Interactive force-directed visualization of your AI's brain:
+Real-time cyberpunk neural interface that shows your AI's brain growing:
 
 ```bash
-npx long-horizon viewer
+npx long-horizon live
 ```
 
-Opens a browser with your knowledge graph — drag nodes, see connections, watch it grow.
+Opens at `http://localhost:3333` with:
+- 🖤 Animated grid background with neon glowing nodes
+- ⚡ Particle trails flowing along edges like neural signals
+- 🔊 Sound effects when new nodes appear (toggleable)
+- 📊 Side panel with stats and node list
+- 🖱️ Drag nodes, hover for details
+
+---
+
+## MCP Server
+
+Expose graph operations as MCP tools for AI agents:
+
+```bash
+npx long-horizon mcp
+```
+
+11 tools available: `lh_init`, `lh_add_node`, `lh_add_edge`, `lh_search`, `lh_get_node`, `lh_traverse`, `lh_status`, `lh_loop_start`, `lh_loop_iterate`, `lh_loop_complete_subtask`, `lh_loop_finalize`
 
 ---
 
 ## CLI Commands
 
 ```bash
+# Core
 lh init                    # Initialize graph brain
 lh status                  # Loop progress + graph stats
+lh repair                  # Rebuild graph index from node files
+
+# Graph
 lh graph [id] [depth]      # Traverse the knowledge graph
 lh node <id>               # Inspect a specific node
 lh add-node <type> <title> # Create a node manually
 lh add-edge <src> <rel> <tgt>  # Link two nodes
-lh adapt [tool|all|list]   # Install for your AI tool
-lh viewer                  # Open graph visualization (snapshot)
-lh live                    # Real-time brain viewer (auto-refreshes)
+lh search <query>          # Search nodes by title, tags, content
+
+# Visualization
+lh viewer                  # Graph snapshot (static HTML)
+lh live                    # Real-time brain viewer
+lh share                   # Generate shareable brain HTML
+
+# Export
+lh export obsidian         # Export as Obsidian vault with [[wikilinks]]
+lh export markdown         # Export as Markdown wiki
+lh export json             # Export as single JSON file
+
+# Maintenance
+lh stats                   # Brain growth metrics + hub analysis
+lh sync                    # Commit brain to git + push
 lh compact                 # Compact context, preserve graph
-lh reflect                 # Analyze graph for patterns
-lh validate                # Check graph integrity
+lh reflect                 # Analyze graph health + patterns
+lh validate                # Check integrity + auto-repair
+
+# Integration
+lh adapt [tool|all|list]   # Install for your AI tool
+lh mcp                     # Start MCP server (stdio)
 ```
 
 ---
@@ -167,7 +205,7 @@ lh validate                # Check graph integrity
 │  │ loop-state  │  │         brain/                │ │
 │  │   .json     │  │  ┌─────────────────────────┐ │ │
 │  │             │  │  │    graph-index.json      │ │ │
-│  │ • status    │  │  │    (central registry)    │ │ │
+│  │ • status    │  │  │    (self-healing index)  │ │ │
 │  │ • subtasks  │  │  ├─────────────────────────┤ │ │
 │  │ • iteration │  │  │ decisions/ lessons/      │ │ │
 │  │ • % done    │  │  │ patterns/  tasks/        │ │ │
@@ -179,12 +217,32 @@ lh validate                # Check graph integrity
 
 ---
 
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Autonomous Loop** | AI self-triggers through subtasks until 100% done |
+| **Graph Memory** | Connected nodes with typed edges (leads_to, caused_by, etc.) |
+| **Self-Healing Index** | Auto-rebuilds graph-index.json from node files if corrupted |
+| **Live Viewer** | Real-time cyberpunk visualization with sound effects |
+| **MCP Server** | 11 tools for direct AI integration |
+| **Universal Adapters** | One command for Cursor, Windsurf, Claude, Aider, Codex |
+| **Search** | Full-text search across titles, tags, and content |
+| **Export** | Obsidian vault, Markdown wiki, or JSON |
+| **Shareable Brain** | Generate standalone HTML anyone can open |
+| **Git Sync** | Auto-commit brain to git |
+| **Conflict Detection** | Warns when new knowledge contradicts existing |
+| **Weight Decay** | Old unused nodes fade, recent ones stay prominent |
+| **Stats Dashboard** | Terminal metrics with bar charts and hub analysis |
+
+---
+
 ## Why Zero Dependencies?
 
 - **Instant install** — `npx` just works, no waiting
 - **No supply chain risk** — nothing to audit
 - **Works offline** — no network calls
-- **Tiny** — the whole thing is ~30KB
+- **Tiny** — ~34KB packed
 - **Node 16+** — runs everywhere
 
 ---
@@ -198,16 +256,7 @@ lh validate                # Check graph integrity
 | Custom GPTs | Locked to one platform | **Works with any AI tool** |
 | Memory plugins | Flat, no connections | **Graph brain with edges** |
 | Session logs | Write-only, never read | **Traversable, queryable** |
-
----
-
-## How the Loop Actually Works
-
-The SKILL.md file contains instructions that tell your AI:
-
-> "You are autonomous. When given a task, decompose it into subtasks. Execute them one by one. Never ask 'should I continue?' — just continue. Update loop-state.json every iteration. Process memory queue every 3 iterations. Only stop when 100% done or truly blocked after 3 retries."
-
-The AI reads this, follows it, and becomes self-driving. No daemon. No background process. The instructions ARE the loop.
+| MCP memory servers | Memory only, no execution | **Memory + autonomous execution** |
 
 ---
 
@@ -216,7 +265,7 @@ The AI reads this, follows it, and becomes self-driving. No daemon. No backgroun
 PRs welcome. The codebase is intentionally simple — pure Node.js, no build step, no transpilation.
 
 ```bash
-git clone https://github.com/anthropics/long-horizon
+git clone https://github.com/justnishh/long-horizon
 cd long-horizon
 node bin/lh.js help
 ```
