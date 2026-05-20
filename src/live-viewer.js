@@ -319,6 +319,7 @@ canvas { display: block; position: relative; z-index: 1; }
   <div class="hud-stats" id="hudStats">LOADING...</div>
   <div class="hud-time" id="hudTime"></div>
   <div class="hud-live">NEURAL LINK ACTIVE</div>
+  <button id="soundToggle" onclick="soundEnabled=!soundEnabled;this.textContent=soundEnabled?'🔊':'🔇'" style="background:none;border:1px solid rgba(0,240,255,0.2);color:#00f0ff;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:14px">🔊</button>
 </div>
 
 <div id="tooltip"></div>
@@ -355,6 +356,25 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let W, H, nodes = [], edges = [], dragging = null, hovered = null, lastJson = '', particles = [];
 
+// Sound system
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let soundEnabled = true;
+const PITCHES = { context: 440, decision: 523, task: 392, lesson: 587, pattern: 659, milestone: 784 };
+
+function playPing(type) {
+  if (!soundEnabled) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.type = 'sine';
+  osc.frequency.value = PITCHES[type] || 440;
+  gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.6);
+}
+
 function resize() {
   W = canvas.width = window.innerWidth - 280;
   H = canvas.height = window.innerHeight;
@@ -388,6 +408,14 @@ class Particle {
 function loadGraph(data) {
   const json = JSON.stringify(data);
   if (json === lastJson) return;
+
+  // Detect new nodes for sound
+  const oldIds = new Set(nodes.map(n => n.id));
+  const entries = Object.entries(data.nodes);
+  entries.forEach(([id, n]) => {
+    if (!oldIds.has(id) && oldIds.size > 0) playPing(n.type);
+  });
+
   lastJson = json;
 
   const entries = Object.entries(data.nodes);

@@ -18,6 +18,15 @@ function info(msg) { log(`${C.cyan}›${C.reset} ${msg}`); }
 function warn(msg) { log(`${C.yellow}!${C.reset} ${msg}`); }
 function error(msg) { log(`${C.red}✗${C.reset} ${msg}`); process.exit(1); }
 
+function sanitizeFilename(str) {
+  return str.replace(/[<>:"/\\|?*]/g, '').replace(/\s+/g, ' ').trim().slice(0, 80);
+}
+
+function getEdgeRelation(index, sourceId, targetId) {
+  const edge = (index.edges || []).find(e => e.source === sourceId && e.target === targetId);
+  return edge ? edge.relation : 'related';
+}
+
 const commands = {
   init() {
     const { init } = require('../src/init');
@@ -267,6 +276,148 @@ const commands = {
     if (index.stats.total_edges < index.stats.total_nodes) { warn('Graph is sparse — look for missing connections'); }
   },
 
+  stats() {
+    const graph = require('../src/graph');
+    const index = graph.readIndex(cwd);
+    const nodes = Object.entries(index.nodes);
+    const types = {};
+    const connectivity = [];
+    let orphans = 0;
+    let todayCount = 0;
+    let weekCount = 0;
+    const now = Date.now();
+    const dayMs = 86400000;
+
+    nodes.forEach(([id, n]) => {
+      types[n.type] = (types[n.type] || 0) + 1;
+      const conns = (n.edges_out || []).length + (n.edges_in || []).length;
+      connectivity.push({ id, title: n.title, type: n.type, conns });
+      if (id !== index.root_node && conns === 0) orphans++;
+
+      // Check file creation time
+      const filePath = path.join(cwd, '.long-horizon', n.file);
+      if (fs.existsSync(filePath)) {
+        const mtime = fs.statSync(filePath).mtimeMs;
+        if (now - mtime < dayMs) todayCount++;
+        if (now - mtime < dayMs * 7) weekCount++;
+      }
+    });
+
+    const avgConns = nodes.length > 0 ? (connectivity.reduce((s, c) => s + c.conns, 0) / nodes.length).toFixed(1) : 0;
+    const hubs = connectivity.sort((a, b) => b.conns - a.conns).slice(0, 5);
+    const maxType = Math.max(...Object.values(types), 1);
+
+    heading('Brain Statistics');
+    log('');
+    info(`Total Nodes: ${C.bold}${nodes.length}${C.reset}  |  Total Edges: ${C.bold}${index.stats.total_edges}${C.reset}`);
+    info(`Avg Connections: ${avgConns}  |  Orphans: ${orphans}`);
+    info(`Created Today: ${todayCount}  |  This Week: ${weekCount}`);
+    log('');
+
+    log(`  ${C.bold}Node Types${C.reset}`);
+    Object.entries(types).sort((a, b) => b[1] - a[1]).forEach(([t, c]) => {
+      const bar = '█'.repeat(Math.round((c / maxType) * 20));
+      const color = { context: C.purple, decision: C.cyan, task: C.blue, lesson: C.green, pattern: C.yellow, milestone: C.bold }[t] || '';
+      log(`  ${color}${t.padEnd(12)}${C.reset} ${bar} ${c}`);
+    });
+
+    log('');
+    log(`  ${C.bold}Top Hubs${C.reset}`);
+    hubs.forEach(h => {
+      log(`  ${C.cyan}${h.conns}${C.reset} connections — ${h.title} ${C.dim}(${h.type})${C.reset}`);
+    });
+  },
+
+  export() {
+    const graph = require('../src/graph');
+    const index = graph.readIndex(cwd);
+    const format = args[1] || 'obsidian';
+    const outDir = path.join(cwd, 'brain-export');
+    fs.mkdirSync(outDir, { recursive: true });
+
+    if (format === 'json') {
+      // JSON export — full dump
+      const dump = { ...index };
+      for (const [id, node] of Object.entries(dump.nodes)) {
+        const filePath = path.join(cwd, '.long-horizon', node.file);
+        if (fs.existsSync(filePath)) dump.nodes[id].content = fs.readFileSync(filePath, 'utf8');
+      }
+      fs.writeFileSync(path.join(outDir, 'brain.json'), JSON.stringify(dump, null, 2), 'utf8');
+      success(`Exported JSON: brain-export/brain.json (${Object.keys(index.nodes).length} nodes)`);
+
+    } else if (format === 'obsidian') {
+      // Obsidian vault with [[wikilinks]]
+      for (const [id, node] of Object.entries(index.nodes)) {
+        const filePath = path.join(cwd, '.long-horizon', node.file);
+        let content = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : `# ${node.title}`;
+
+        // Add wikilinks for edges
+        const links = [];
+        (node.edges_out || []).forEach(targetId => {
+          const target = index.nodes[targetId];
+          if (target) links.push(`- →[${getEdgeRelation(index, id, targetId)}] [[${sanitizeFilename(target.title)}]]`);
+        });
+        (node.edges_in || []).forEach(sourceId => {
+          const source = index.nodes[sourceId];
+          if (source) links.push(`- ←[${getEdgeRelation(index, sourceId, id)}] [[${sanitizeFilename(source.title)}]]`);
+        });
+
+        if (links.length) content += '\n\n## Connections\n\n' + links.join('\n');
+
+        const filename = sanitizeFilename(node.title) + '.md';
+        fs.writeFileSync(path.join(outDir, filename), content, 'utf8');
+      }
+      success(`Exported Obsidian vault: brain-export/ (${Object.keys(index.nodes).length} files)`);
+      info('Open this folder in Obsidian to see the graph.');
+
+    } else {
+      // Markdown wiki with relative links
+      for (const [id, node] of Object.entries(index.nodes)) {
+        const filePath = path.join(cwd, '.long-horizon', node.file);
+        let content = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : `# ${node.title}`;
+
+        const links = [];
+        (node.edges_out || []).forEach(targetId => {
+          const target = index.nodes[targetId];
+          if (target) links.push(`- →[${getEdgeRelation(index, id, targetId)}] [${target.title}](./${sanitizeFilename(target.title)}.md)`);
+        });
+        (node.edges_in || []).forEach(sourceId => {
+          const source = index.nodes[sourceId];
+          if (source) links.push(`- ←[${getEdgeRelation(index, sourceId, id)}] [${source.title}](./${sanitizeFilename(source.title)}.md)`);
+        });
+
+        if (links.length) content += '\n\n## Connections\n\n' + links.join('\n');
+
+        const filename = sanitizeFilename(node.title) + '.md';
+        fs.writeFileSync(path.join(outDir, filename), content, 'utf8');
+      }
+      success(`Exported Markdown wiki: brain-export/ (${Object.keys(index.nodes).length} files)`);
+    }
+  },
+
+  share() {
+    const graph = require('../src/graph');
+    const index = graph.readIndex(cwd);
+    const viewerSrc = fs.readFileSync(path.join(__dirname, '..', 'src', 'viewer.html'), 'utf8');
+
+    const injected = viewerSrc.replace(
+      '// Also try to load from URL param or fetch local\n' +
+      'const params = new URLSearchParams(location.search);\n' +
+      'if (params.get(\'file\')) {\n' +
+      '  fetch(params.get(\'file\')).then(r => r.json()).then(loadGraph).catch(() => {});\n' +
+      '} else {\n' +
+      '  fetch(\'.long-horizon/brain/graph-index.json\').then(r => r.json()).then(loadGraph).catch(() => {});\n' +
+      '}',
+      `// Embedded graph data — shared from Long-Horizon (https://github.com/justnishh/long-horizon)\nconst GRAPH_DATA = ${JSON.stringify(index)};\nloadGraph(GRAPH_DATA);`
+    );
+
+    const dest = path.join(cwd, 'brain-share.html');
+    fs.writeFileSync(dest, injected, 'utf8');
+    success(`Shareable brain created: brain-share.html`);
+    info(`${Object.keys(index.nodes).length} nodes, ${index.edges.length} edges embedded`);
+    info('Send this file to anyone — opens in any browser, no server needed.');
+  },
+
   validate() {
     const graph = require('../src/graph');
     const loop = require('../src/loop');
@@ -316,6 +467,10 @@ ${C.bold}COMMANDS${C.reset}
   ${C.cyan}adapt${C.reset} [tool|all|list]  Install for AI tool (cursor/windsurf/aider/claude/codex)
   ${C.cyan}viewer${C.reset}            Open interactive graph visualization (snapshot)
   ${C.cyan}live${C.reset}              Live-updating graph viewer (real-time)
+  ${C.cyan}share${C.reset}             Generate shareable brain HTML (send to anyone)
+  ${C.cyan}export${C.reset} <format>   Export brain (obsidian/markdown/json)
+  ${C.cyan}stats${C.reset}             Brain growth metrics + hub analysis
+  ${C.cyan}sync${C.reset}              Commit brain to git + push
   ${C.cyan}compact${C.reset}           Compact context, preserve graph
   ${C.cyan}reflect${C.reset}           Analyze graph health + patterns
   ${C.cyan}validate${C.reset}          Check graph integrity
