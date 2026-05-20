@@ -60,6 +60,40 @@ npx long-horizon live
 
 ---
 
+## How to Prompt Your AI
+
+Long-Horizon works by instructing your AI via a skill file. **You must tell the AI to follow the skill** in your prompts. Here's how:
+
+### First message (setup):
+```
+Run: npx long-horizon init
+Run: npx long-horizon adapt claude
+```
+
+### Every task message (prefix this before your request):
+```
+Follow the Long-Horizon skill instructions. Use the autonomous loop —
+decompose into subtasks, update loop-state.json every iteration, and
+WRITE brain node files to disk after every 2-3 subtasks. Don't stop
+until 100% complete.
+
+[Your actual task here]
+```
+
+### Why is this needed?
+
+AI tools read skill files as optional context. Without the prefix, the AI may ignore the skill and work normally. The prefix activates the autonomous behavior.
+
+### Pro tip — save it as a snippet:
+
+Save this prefix somewhere you can paste it before every task. The AI will then:
+1. Decompose your task into subtasks
+2. Execute them in a loop without stopping
+3. Write decisions, lessons, and patterns to the brain
+4. Show progress in the live viewer in real-time
+
+---
+
 ## How It Works
 
 ### 1. The Autonomous Loop
