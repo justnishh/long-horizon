@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Task title here",
+      "description": "What to build/do",
+      "priority": "high",
+      "status": "pending"
+    }
+  ]
+}

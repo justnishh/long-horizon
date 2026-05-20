@@ -121,8 +121,40 @@ FOR EACH subtask:
 2. Process any remaining memory queue items
 3. Update loop-state.json status to "complete"
 4. Create milestone node in graph
-5. Report final state to user
+5. AUTO-COMMIT: Run `git add .long-horizon/ && git commit -m "lh/milestone: {milestone title}"`
+6. CHECK ROADMAP: Read .long-horizon/roadmap.json (if exists)
+   - If there are tasks with status "pending" → pick the highest priority one
+   - Mark it as "in_progress" in roadmap.json
+   - START A NEW LOOP for that task immediately (go to Phase 1)
+   - Do NOT wait for user input
+7. If no pending roadmap tasks → report final state to user
 ```
+
+### Auto-Commit on Milestone
+
+When you create a milestone node, IMMEDIATELY run:
+```bash
+git add .long-horizon/
+git commit -m "lh/milestone: {milestone title}"
+```
+This happens automatically. No user action needed.
+
+### Auto-Chain from Roadmap
+
+If `.long-horizon/roadmap.json` exists and has pending tasks:
+```json
+{
+  "tasks": [
+    {"id": 1, "title": "Build auth", "description": "...", "priority": "high", "status": "done"},
+    {"id": 2, "title": "Build API", "description": "...", "priority": "high", "status": "pending"},
+    {"id": 3, "title": "Write tests", "description": "...", "priority": "medium", "status": "pending"}
+  ]
+}
+```
+
+After completing task 1, you see task 2 is pending → you immediately start task 2 without waiting for the user. You keep going until all roadmap tasks are done.
+
+**The user gives you a roadmap once. You execute ALL of it in one session.**
 
 ### Loop State File: `.long-horizon/loop-state.json`
 

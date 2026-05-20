@@ -82,7 +82,7 @@ Initialized by Long-Horizon v2.
     version: '2.0',
     loop: {
       status: 'idle', task_id: null, task_description: null,
-      started_at: null, iteration: 0, max_iterations: 100,
+      started_at: null, iteration: 0, max_iterations: 9999,
       subtasks: [], completed_subtasks: [], blocked_subtasks: [],
       completion_criteria: [], completion_pct: 0,
       last_action: null, last_action_at: null,
@@ -95,7 +95,7 @@ Initialized by Long-Horizon v2.
   // Config
   const config = {
     version: '2.0',
-    loop: { max_iterations: 100, memory_flush_interval: 3, max_retries_per_subtask: 3, auto_compact_threshold_pct: 80 },
+    loop: { max_iterations: 9999, memory_flush_interval: 3, max_retries_per_subtask: 3, auto_compact_threshold_pct: 80, auto_chain_roadmap: true },
     graph: { max_traversal_depth: 3, context_nodes_limit: 10, auto_backlink: true },
     validation: { enabled: true, test_command: '', lint_command: '' },
     git: { auto_commit: true, commit_on_milestone: true }
