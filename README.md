@@ -1,12 +1,6 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/AI-Autonomous-blueviolet?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Memory-Graph%20Brain-ff69b4?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Dependencies-Zero-brightgreen?style=for-the-badge" />
-  <img src="https://img.shields.io/npm/v/long-horizon?style=for-the-badge&color=orange" />
-  <img src="https://img.shields.io/github/stars/justnishh/long-horizon?style=for-the-badge" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f0c29,50:302b63,100:24243e&height=200&section=header&text=🧠%20Long-Horizon&fontSize=50&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Autonomous%20AI%20Engineering%20with%20Graph%20Memory&descSize=16&descAlignY=55&descColor=a78bfa" width="100%" />
 </p>
-
-<h1 align="center">🧠 Long-Horizon</h1>
 
 <p align="center">
   <strong>Give your AI one prompt. It builds the entire project.</strong><br>
@@ -14,36 +8,47 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start">Quick Start</a> •
-  <a href="#how-it-works">How It Works</a> •
-  <a href="#works-with">Works With</a> •
-  <a href="#live-brain-viewer">Live Brain Viewer</a> •
-  <a href="#mcp-server">MCP Server</a>
+  <a href="https://www.npmjs.com/package/long-horizon"><img src="https://img.shields.io/npm/v/long-horizon?style=for-the-badge&color=ff6b6b&label=npm" /></a>
+  <img src="https://img.shields.io/badge/Dependencies-Zero-00d2d3?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Size-~34KB-54a0ff?style=for-the-badge" />
+  <a href="https://github.com/justnishh/long-horizon/stargazers"><img src="https://img.shields.io/github/stars/justnishh/long-horizon?style=for-the-badge&color=feca57" /></a>
+  <img src="https://img.shields.io/badge/Node-16+-43d9ad?style=for-the-badge" />
+</p>
+
+<p align="center">
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-how-to-prompt-your-ai">How to Use</a> •
+  <a href="#-how-it-works">How It Works</a> •
+  <a href="#-works-with">Works With</a> •
+  <a href="#-live-brain-viewer">Live Viewer</a> •
+  <a href="#-mcp-server">MCP Server</a> •
+  <a href="#-cli-commands">CLI</a>
 </p>
 
 ---
 
-## The Problem
+## 💀 The Problem
 
-You prompt your AI. It does one thing. Stops. You prompt again. It forgot what it did. You re-explain. It makes the same mistake. You rage-quit.
+You prompt your AI. It does one thing. Stops. You prompt again. It forgot what it did. You re-explain. It makes the same mistake. **You rage-quit.**
 
-**Long-Horizon fixes this permanently.**
-
-## The Solution
+## ⚡ The Solution
 
 ```bash
 npx long-horizon init
 ```
 
 Now your AI:
-1. **Self-loops** — executes subtask after subtask without stopping
-2. **Never forgets** — builds a connected knowledge graph as it works
-3. **Resumes perfectly** — picks up exactly where it left off after any interruption
-4. **Self-heals** — graph index auto-repairs if corrupted
+
+| | |
+|---|---|
+| 🔄 **Self-loops** | Executes subtask after subtask without stopping |
+| 🧠 **Never forgets** | Builds a connected knowledge graph as it works |
+| 🔁 **Resumes perfectly** | Picks up exactly where it left off after any interruption |
+| 🛡️ **Self-heals** | Graph index auto-repairs if corrupted |
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 # Initialize in your project
@@ -60,7 +65,7 @@ npx long-horizon live
 
 ---
 
-## How to Prompt Your AI
+## 💬 How to Prompt Your AI
 
 Long-Horizon works by instructing your AI via a skill file. **You must tell the AI to follow the skill** in your prompts. Here's how:
 
@@ -94,7 +99,7 @@ Save this prefix somewhere you can paste it before every task. The AI will then:
 
 ---
 
-## How It Works
+## 🔁 How It Works
 
 ### 1. The Autonomous Loop
 
@@ -137,11 +142,11 @@ Every decision, lesson, and pattern becomes a connected node:
 
 ### 3. Parallel Memory
 
-While the AI works, it simultaneously queues knowledge updates. Every 3 iterations, it flushes — creating nodes, linking edges. **Work and memory happen at the same time.**
+While the AI works, it writes knowledge to disk — decisions, lessons, patterns. **Work and memory happen at the same time.**
 
 ---
 
-## Works With
+## 🔌 Works With
 
 | Tool | Command | How |
 |------|---------|-----|
@@ -155,7 +160,7 @@ While the AI works, it simultaneously queues knowledge updates. Every 3 iteratio
 
 ---
 
-## Live Brain Viewer
+## 🖥️ Live Brain Viewer
 
 Real-time cyberpunk neural interface that shows your AI's brain growing:
 
@@ -172,7 +177,7 @@ Opens at `http://localhost:3333` with:
 
 ---
 
-## MCP Server
+## 🤖 MCP Server
 
 Expose graph operations as MCP tools for AI agents:
 
@@ -184,7 +189,7 @@ npx long-horizon mcp
 
 ---
 
-## CLI Commands
+## 📟 CLI Commands
 
 ```bash
 # Core
@@ -223,7 +228,7 @@ lh mcp                     # Start MCP server (stdio)
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -251,7 +256,7 @@ lh mcp                     # Start MCP server (stdio)
 
 ---
 
-## Features
+## ✨ Features
 
 | Feature | Description |
 |---------|-------------|
@@ -271,7 +276,7 @@ lh mcp                     # Start MCP server (stdio)
 
 ---
 
-## Why Zero Dependencies?
+## 🪶 Why Zero Dependencies?
 
 - **Instant install** — `npx` just works, no waiting
 - **No supply chain risk** — nothing to audit
@@ -281,7 +286,7 @@ lh mcp                     # Start MCP server (stdio)
 
 ---
 
-## vs. Other Approaches
+## ⚔️ vs. Other Approaches
 
 | Approach | Problem | Long-Horizon |
 |----------|---------|--------------|
@@ -294,7 +299,7 @@ lh mcp                     # Start MCP server (stdio)
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 PRs welcome. The codebase is intentionally simple — pure Node.js, no build step, no transpilation.
 
@@ -306,11 +311,15 @@ node bin/lh.js help
 
 ---
 
-## License
+## 📄 License
 
 MIT
 
 ---
+
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f0c29,50:302b63,100:24243e&height=100&section=footer" width="100%" />
+</p>
 
 <p align="center">
   <strong>One prompt. Full project. Connected memory.</strong><br>
