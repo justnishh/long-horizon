@@ -338,6 +338,8 @@ canvas { display: block; position: relative; z-index: 1; }
   <div class="legend-item"><span class="legend-dot" style="color:#00ff88"></span> lesson</div>
   <div class="legend-item"><span class="legend-dot" style="color:#ff2d75"></span> pattern</div>
   <div class="legend-item"><span class="legend-dot" style="color:#ffe600"></span> milestone</div>
+  <div class="legend-item"><span class="legend-dot" style="color:#ff9f43"></span> preference</div>
+  <div class="legend-item"><span class="legend-dot" style="color:#a29bfe"></span> entity</div>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -349,7 +351,9 @@ const COLORS = {
   task: '#4facfe',
   lesson: '#00ff88',
   pattern: '#ff2d75',
-  milestone: '#ffe600'
+  milestone: '#ffe600',
+  preference: '#ff9f43',
+  entity: '#a29bfe'
 };
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -361,7 +365,7 @@ let W, H, nodes = [], edges = [], dragging = null, hovered = null, lastJson = ''
 // Sound system - lazy init on first user gesture
 let audioCtx = null;
 let soundEnabled = true;
-const PITCHES = { context: 440, decision: 523, task: 392, lesson: 587, pattern: 659, milestone: 784 };
+const PITCHES = { context: 440, decision: 523, task: 392, lesson: 587, pattern: 659, milestone: 784, preference: 349, entity: 466 };
 
 function playPing(type) {
   if (!soundEnabled || !audioCtx) return;

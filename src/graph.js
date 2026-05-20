@@ -34,7 +34,7 @@ function generateId(type) {
 }
 
 function addNode(cwd, { type, title, content, tags = [], connectTo, relation, weight = 0.7 }) {
-  const VALID_TYPES = ['decision', 'lesson', 'pattern', 'task', 'milestone', 'context'];
+  const VALID_TYPES = ['decision', 'lesson', 'pattern', 'task', 'milestone', 'context', 'preference', 'entity'];
   if (!VALID_TYPES.includes(type)) throw new Error(`Invalid node type: ${type}. Must be one of: ${VALID_TYPES.join(', ')}`);
 
   const index = readIndex(cwd);
@@ -113,6 +113,13 @@ function getNode(cwd, id) {
   const index = readIndex(cwd);
   const entry = index.nodes[id];
   if (!entry) return null;
+
+  // Recall tracking — increment count
+  if (!entry.recall_count) entry.recall_count = 0;
+  entry.recall_count++;
+  index.nodes[id] = entry;
+  writeIndex(index, cwd);
+
   const filePath = path.join(getLhDir(cwd), entry.file);
   const content = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null;
   return { ...entry, id, content };
@@ -188,7 +195,7 @@ function search(cwd, query) {
       }
     }
 
-    if (score > 0) results.push({ id, ...node, score });
+    if (score > 0) results.push({ id, ...node, score: score + (node.recall_count || 0) * 0.5 });
   }
 
   return results.sort((a, b) => b.score - a.score);

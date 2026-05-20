@@ -256,6 +256,14 @@ weight: 0.8
 | `task` | Work unit (from loop) | "Build login endpoint" |
 | `milestone` | Completed goal | "Auth system complete" |
 | `context` | Session/state snapshot | "Current sprint focus" |
+| `preference` | User working style or project preference | "Always use TypeScript", "Prefer dark themes" |
+| `entity` | People, tools, services, APIs with live state | "React v19 - frontend framework", "Nishant - project owner" |
+
+**When to use `preference`:** User tells you they like/dislike something, prefer a certain approach, or have a working style. Store it so you never ask again.
+
+**When to use `entity`:** You encounter a person, tool, API, or service that the project depends on. Store its current state so you remember it across sessions.
+
+**⚠️ PII Warning for `entity` nodes:** If storing real people's names/roles, be aware these are plain text files on disk. Don't store sensitive personal data (emails, phone numbers, addresses) in entity nodes.
 
 ### Edge Relations
 
