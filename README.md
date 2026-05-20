@@ -203,6 +203,8 @@ Opens at `http://localhost:3333` with:
 - 📊 Side panel with stats and node list
 - 🖱️ Drag nodes, hover for details
 
+**8 Node Types:** context, decision, task, lesson, pattern, milestone, preference, entity
+
 ---
 
 ## 🤖 MCP Server
