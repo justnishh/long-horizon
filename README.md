@@ -142,7 +142,8 @@ lh node <id>               # Inspect a specific node
 lh add-node <type> <title> # Create a node manually
 lh add-edge <src> <rel> <tgt>  # Link two nodes
 lh adapt [tool|all|list]   # Install for your AI tool
-lh viewer                  # Open graph visualization
+lh viewer                  # Open graph visualization (snapshot)
+lh live                    # Real-time brain viewer (auto-refreshes)
 lh compact                 # Compact context, preserve graph
 lh reflect                 # Analyze graph for patterns
 lh validate                # Check graph integrity
