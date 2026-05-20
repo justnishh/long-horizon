@@ -125,10 +125,12 @@ const commands = {
     success(`Graph viewer created: brain-viewer.html`);
     info('Open in browser. It auto-loads .long-horizon/brain/graph-index.json');
 
-    // Try to open in browser
+    // Try to open in browser (non-blocking)
     try {
-      const open = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-      execSync(`${open} "${dest}"`, { stdio: 'ignore' });
+      const { spawn } = require('child_process');
+      if (process.platform === 'win32') spawn('cmd', ['/c', 'start', '', dest], { detached: true, stdio: 'ignore' }).unref();
+      else if (process.platform === 'darwin') spawn('open', [dest], { detached: true, stdio: 'ignore' }).unref();
+      else spawn('xdg-open', [dest], { detached: true, stdio: 'ignore' }).unref();
     } catch {}
   },
 
