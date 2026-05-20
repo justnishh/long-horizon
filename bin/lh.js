@@ -119,11 +119,26 @@ const commands = {
   },
 
   viewer() {
-    const viewerSrc = path.join(__dirname, '..', 'src', 'viewer.html');
+    const graph = require('../src/graph');
+    const index = graph.readIndex(cwd);
+    const viewerSrc = fs.readFileSync(path.join(__dirname, '..', 'src', 'viewer.html'), 'utf8');
+    
+    // Embed graph data directly into HTML so it works without a server
+    const injected = viewerSrc.replace(
+      '// Also try to load from URL param or fetch local\n' +
+      'const params = new URLSearchParams(location.search);\n' +
+      'if (params.get(\'file\')) {\n' +
+      '  fetch(params.get(\'file\')).then(r => r.json()).then(loadGraph).catch(() => {});\n' +
+      '} else {\n' +
+      '  fetch(\'.long-horizon/brain/graph-index.json\').then(r => r.json()).then(loadGraph).catch(() => {});\n' +
+      '}',
+      `// Embedded graph data\nconst GRAPH_DATA = ${JSON.stringify(index)};\nloadGraph(GRAPH_DATA);`
+    );
+
     const dest = path.join(cwd, 'brain-viewer.html');
-    fs.copyFileSync(viewerSrc, dest);
+    fs.writeFileSync(dest, injected, 'utf8');
     success(`Graph viewer created: brain-viewer.html`);
-    info('Open in browser. It auto-loads .long-horizon/brain/graph-index.json');
+    info(`Embedded ${Object.keys(index.nodes).length} nodes, ${index.edges.length} edges`);
 
     // Try to open in browser (non-blocking)
     try {
@@ -132,6 +147,20 @@ const commands = {
       else if (process.platform === 'darwin') spawn('open', [dest], { detached: true, stdio: 'ignore' }).unref();
       else spawn('xdg-open', [dest], { detached: true, stdio: 'ignore' }).unref();
     } catch {}
+  },
+
+  live() {
+    const { spawn } = require('child_process');
+    const viewer = spawn('node', [path.join(__dirname, '..', 'src', 'live-viewer.js'), cwd], { stdio: 'inherit' });
+    
+    // Open browser after short delay
+    setTimeout(() => {
+      try {
+        if (process.platform === 'win32') spawn('cmd', ['/c', 'start', '', 'http://localhost:3333'], { detached: true, stdio: 'ignore' }).unref();
+        else if (process.platform === 'darwin') spawn('open', ['http://localhost:3333'], { detached: true, stdio: 'ignore' }).unref();
+        else spawn('xdg-open', ['http://localhost:3333'], { detached: true, stdio: 'ignore' }).unref();
+      } catch {}
+    }, 500);
   },
 
   compact() {
@@ -209,7 +238,8 @@ ${C.bold}COMMANDS${C.reset}
   ${C.cyan}add-node${C.reset} <type> <title>  Create a new node
   ${C.cyan}add-edge${C.reset} <src> <rel> <tgt>  Link two nodes
   ${C.cyan}adapt${C.reset} [tool|all|list]  Install for AI tool (cursor/windsurf/aider/claude/codex)
-  ${C.cyan}viewer${C.reset}            Open interactive graph visualization
+  ${C.cyan}viewer${C.reset}            Open interactive graph visualization (snapshot)
+  ${C.cyan}live${C.reset}              Live-updating graph viewer (real-time)
   ${C.cyan}compact${C.reset}           Compact context, preserve graph
   ${C.cyan}reflect${C.reset}           Analyze graph health + patterns
   ${C.cyan}validate${C.reset}          Check graph integrity
