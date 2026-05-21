@@ -65,65 +65,40 @@ npx long-horizon live
 
 ---
 
-## 💬 How to Prompt Your AI
+## 💬 How to Use
 
-Long-Horizon works by instructing your AI via a skill file. **You must tell the AI to follow the skill** in your prompts. Here's how:
+Long-Horizon is **always-on**. Once installed, your AI automatically operates in autonomous mode — no special prompts needed.
 
-### First message (setup):
-```
-Run: npx long-horizon init
-Run: npx long-horizon adapt claude
-```
-
-### Every task message (prefix this before your request):
-```
-Follow the Long-Horizon skill instructions. Use the autonomous loop —
-decompose into subtasks, update loop-state.json every iteration, and
-WRITE brain node files to disk after every 2-3 subtasks. Don't stop
-until 100% complete.
-
-[Your actual task here]
+### Setup (one time):
+```bash
+npx long-horizon init
+npx long-horizon adapt cursor    # or: windsurf, aider, claude, codex, all
 ```
 
-### Why is this needed?
+### Then just talk normally:
+```
+Build a REST API with authentication.
+```
 
-AI tools read skill files as optional context. Without the prefix, the AI may ignore the skill and work normally. The prefix activates the autonomous behavior.
+```
+Add a dark mode toggle to the app.
+```
 
-### Pro tip — save it as a snippet:
+```
+The login form doesn't validate email. Fix it.
+```
 
-Save this prefix somewhere you can paste it before every task. The AI will then:
+That's it. The AI will:
 1. Decompose your task into subtasks
 2. Execute them in a loop without stopping
 3. Write decisions, lessons, and patterns to the brain
 4. Show progress in the live viewer in real-time
 
-### Follow-up messages:
-
-For every message after the first task, just prefix with:
+### Resuming after a break:
 ```
-Follow the Long-Horizon skill. Continue the autonomous loop.
-
-[Your request here]
+Resume where you left off.
 ```
-
-**Examples:**
-```
-Follow the Long-Horizon skill. Continue the autonomous loop.
-
-Add a dark mode toggle to the app.
-```
-
-```
-Follow the Long-Horizon skill. Continue the autonomous loop.
-
-The login form doesn't validate email. Fix it.
-```
-
-```
-Follow the Long-Horizon skill. Continue the autonomous loop.
-
-Resume where you left off. Check loop-state.json and continue.
-```
+The AI reads `loop-state.json` and picks up exactly where it stopped.
 
 ---
 
