@@ -1,6 +1,6 @@
 ---
 name: "Long-Horizon"
-description: "Autonomous AI engineering cognition with self-triggering execution loop and graph-connected memory. When given a task, the AI decomposes it, executes subtasks in a loop until 100% complete, and simultaneously builds a connected knowledge graph where every decision, lesson, and pattern links to related nodes. Use for any multi-step project work."
+description: "Autonomous AI engineering cognition with self-triggering execution loop and graph-connected memory. When given a task, the AI decomposes it, executes subtasks in a loop until 100% complete, and simultaneously builds a connected knowledge graph where every decision, lesson, and pattern links to related nodes. Use when doing any multi-step project work."
 activation: "always"
 ---
 
