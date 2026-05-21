@@ -362,6 +362,17 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let W, H, nodes = [], edges = [], dragging = null, hovered = null, lastJson = '', particles = [];
 
+// Camera: pan & zoom
+let cam = { x: 0, y: 0, zoom: 1 };
+let panning = false, panStart = { x: 0, y: 0 };
+
+function screenToWorld(sx, sy) {
+  return { x: (sx - W/2) / cam.zoom + cam.x, y: (sy - H/2) / cam.zoom + cam.y };
+}
+function worldToScreen(wx, wy) {
+  return { x: (wx - cam.x) * cam.zoom + W/2, y: (wy - cam.y) * cam.zoom + H/2 };
+}
+
 // Sound system - lazy init on first user gesture
 let audioCtx = null;
 let soundEnabled = true;
@@ -440,11 +451,11 @@ function loadGraph(data) {
   entries.forEach(([id, n], i) => {
     const old = oldPositions[id];
     const angle = (i / entries.length) * Math.PI * 2;
-    const r = Math.min(W, H) * 0.28;
+    const r = 300;
     const node = {
       id, ...n,
-      x: old ? old.x : W/2 + Math.cos(angle) * r + (Math.random() - 0.5) * 100,
-      y: old ? old.y : H/2 + Math.sin(angle) * r + (Math.random() - 0.5) * 100,
+      x: old ? old.x : Math.cos(angle) * r + (Math.random() - 0.5) * 100,
+      y: old ? old.y : Math.sin(angle) * r + (Math.random() - 0.5) * 100,
       vx: 0, vy: 0,
       radius: id === data.root_node ? 22 : 11 + (n.edges_out || []).length * 2,
       pulsePhase: Math.random() * Math.PI * 2
@@ -508,20 +519,19 @@ function simulate() {
     e.target.vy -= (dy / d) * force;
   });
   nodes.forEach(n => {
-    n.vx += (W / 2 - n.x) * 0.0003;
-    n.vy += (H / 2 - n.y) * 0.0003;
     n.vx *= 0.87;
     n.vy *= 0.87;
     if (n !== dragging) { n.x += n.vx; n.y += n.vy; }
-    // Clamp to canvas bounds
-    n.x = Math.max(n.radius, Math.min(W - n.radius, n.x));
-    n.y = Math.max(60 + n.radius, Math.min(H - n.radius, n.y));
     n.pulsePhase += 0.03;
   });
 }
 
 function draw() {
   ctx.clearRect(0, 0, W, H);
+  ctx.save();
+  ctx.translate(W/2, H/2);
+  ctx.scale(cam.zoom, cam.zoom);
+  ctx.translate(-cam.x, -cam.y);
 
   // Draw edges with glow
   edges.forEach(e => {
@@ -592,6 +602,8 @@ function draw() {
     ctx.textAlign = 'center';
     ctx.fillText(n.title.length > 25 ? n.title.slice(0, 25) + '...' : n.title, n.x, n.y + r + 16);
   });
+
+  ctx.restore();
 }
 
 function animate() {
@@ -617,10 +629,20 @@ fetch('/graph.json').then(r => r.json()).then(loadGraph);
 // Mouse interaction
 canvas.addEventListener('mousemove', e => {
   const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-  if (dragging) { dragging.x = mx; dragging.y = my; return; }
-  hovered = nodes.find(n => Math.hypot(n.x - mx, n.y - my) < n.radius + 6) || null;
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const world = screenToWorld(sx, sy);
+
+  if (panning) {
+    cam.x -= (e.clientX - panStart.x) / cam.zoom;
+    cam.y -= (e.clientY - panStart.y) / cam.zoom;
+    panStart = { x: e.clientX, y: e.clientY };
+    return;
+  }
+
+  if (dragging) { dragging.x = world.x; dragging.y = world.y; return; }
+
+  hovered = nodes.find(n => Math.hypot(n.x - world.x, n.y - world.y) < (n.radius + 6) / cam.zoom) || null;
   const tt = document.getElementById('tooltip');
   if (hovered) {
     tt.innerHTML =
@@ -638,16 +660,47 @@ canvas.addEventListener('mousemove', e => {
 
 canvas.addEventListener('mousedown', e => {
   const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-  dragging = nodes.find(n => Math.hypot(n.x - mx, n.y - my) < n.radius + 6) || null;
-  if (dragging) canvas.style.cursor = 'grabbing';
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const world = screenToWorld(sx, sy);
+
+  dragging = nodes.find(n => Math.hypot(n.x - world.x, n.y - world.y) < (n.radius + 6) / cam.zoom) || null;
+  if (dragging) {
+    canvas.style.cursor = 'grabbing';
+  } else {
+    panning = true;
+    panStart = { x: e.clientX, y: e.clientY };
+    canvas.style.cursor = 'move';
+  }
 });
 
 canvas.addEventListener('mouseup', () => {
   dragging = null;
+  panning = false;
   canvas.style.cursor = hovered ? 'grab' : 'crosshair';
 });
+
+canvas.addEventListener('mouseleave', () => {
+  panning = false;
+  dragging = null;
+});
+
+// Zoom with scroll wheel
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+
+  // Zoom toward mouse position
+  const worldBefore = screenToWorld(sx, sy);
+  cam.zoom *= zoomFactor;
+  cam.zoom = Math.max(0.05, Math.min(20, cam.zoom));
+  const worldAfter = screenToWorld(sx, sy);
+  cam.x -= (worldAfter.x - worldBefore.x);
+  cam.y -= (worldAfter.y - worldBefore.y);
+}, { passive: false });
 </script>
 </body>
 </html>`;
