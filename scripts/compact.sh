@@ -4,9 +4,9 @@
 
 set -e
 
-PATH="${1:-$(pwd)}"
+PROJECT_PATH="${1:-$(pwd)}"
 SESSION_NAME="${2:-session-$(date +%Y%m%d-%H%M%S)}"
-LH_DIR="${PATH}/.long-horizon"
+LH_DIR="${PROJECT_PATH}/.long-horizon"
 
 if [ ! -d "${LH_DIR}" ]; then
   echo "Error: No .long-horizon directory found. Run ./init.sh first."

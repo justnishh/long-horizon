@@ -4,10 +4,10 @@
 
 set -e
 
-PATH="${1:-$(pwd)}"
-LH_DIR="${PATH}/.long-horizon"
+PROJECT_PATH="${1:-$(pwd)}"
+LH_DIR="${PROJECT_PATH}/.long-horizon"
 
-echo "Initializing Long-Horizon in ${PATH}..."
+echo "Initializing Long-Horizon in ${PROJECT_PATH}..."
 
 mkdir -p "${LH_DIR}/brain/decisions"
 mkdir -p "${LH_DIR}/brain/roadmap"
@@ -17,7 +17,7 @@ mkdir -p "${LH_DIR}/brain/context"
 mkdir -p "${LH_DIR}/brain/metrics"
 mkdir -p "${LH_DIR}/sessions"
 
-PROJECT_NAME=$(basename "${PATH}")
+PROJECT_NAME=$(basename "${PROJECT_PATH}")
 
 cat > "${LH_DIR}/brain/project.json" << EOF
 {

@@ -205,7 +205,7 @@ function repair(cwd) {
   const lhDir = getLhDir(cwd);
   const brainDir = path.join(lhDir, 'brain');
 
-  const types = ['decisions', 'lessons', 'patterns', 'tasks', 'milestones', 'context'];
+  const types = ['decisions', 'lessons', 'patterns', 'tasks', 'milestones', 'context', 'preferences', 'entitys'];
   const discoveredNodes = {};
   const discoveredEdges = [];
   let rootNode = null;
@@ -260,7 +260,7 @@ function repair(cwd) {
 function readIndexSafe(cwd) {
   const index = readIndex(cwd);
   const brainDir = path.join(getLhDir(cwd), 'brain');
-  const types = ['decisions', 'lessons', 'patterns', 'tasks', 'milestones', 'context'];
+  const types = ['decisions', 'lessons', 'patterns', 'tasks', 'milestones', 'context', 'preferences', 'entitys'];
   let fileCount = 0;
   for (const type of types) {
     const dir = path.join(brainDir, type);

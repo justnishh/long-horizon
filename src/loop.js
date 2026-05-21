@@ -33,7 +33,7 @@ function start(cwd, { description, subtasks = [], criteria = [] }) {
     task_description: description,
     started_at: now,
     iteration: 0,
-    max_iterations: 100,
+    max_iterations: 9999,
     subtasks: subtasks.map((s, i) => ({ id: i + 1, description: s, status: 'pending' })),
     completed_subtasks: [],
     blocked_subtasks: [],

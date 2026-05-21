@@ -4,8 +4,8 @@
 
 set -e
 
-PATH="${1:-$(pwd)}"
-LH_DIR="${PATH}/.long-horizon"
+PROJECT_PATH="${1:-$(pwd)}"
+LH_DIR="${PROJECT_PATH}/.long-horizon"
 
 if [ ! -d "${LH_DIR}" ]; then
   echo "Error: No .long-horizon directory found. Run ./init.sh first."

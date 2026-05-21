@@ -23,7 +23,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        type: { type: 'string', enum: ['decision', 'lesson', 'pattern', 'task', 'milestone', 'context'], description: 'Node type' },
+        type: { type: 'string', enum: ['decision', 'lesson', 'pattern', 'task', 'milestone', 'context', 'preference', 'entity'], description: 'Node type' },
         title: { type: 'string', description: 'Node title' },
         content: { type: 'string', description: 'Node content/body' },
         tags: { type: 'array', items: { type: 'string' }, description: 'Tags for categorization' },
@@ -132,7 +132,7 @@ function handleInitialize(params) {
   return {
     protocolVersion: '2024-11-05',
     capabilities: { tools: {} },
-    serverInfo: { name: 'long-horizon', version: '2.1.0' }
+    serverInfo: { name: 'long-horizon', version: '2.5.0' }
   };
 }
 
